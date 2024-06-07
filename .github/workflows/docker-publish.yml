@@ -106,7 +106,7 @@ jobs:
       - name: Tag image as latest
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          IMAGE_ID=$(echo ${{ steps.meta.outputs.tags }} | sed 's/.*://')
-          docker tag ${{ env.IMAGE_NAME }}:${IMAGE_ID} ${{ env.IMAGE_NAME }}:latest
+          TAG=$(echo ${{ steps.meta.outputs.tags }} | cut -d ',' -f 1 | cut -d ':' -f 2)
+          docker tag ${{ env.IMAGE_NAME }}:${TAG} ${{ env.IMAGE_NAME }}:latest
           docker push ${{ env.IMAGE_NAME }}:latest
 
