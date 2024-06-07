@@ -81,7 +81,9 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          # Tag Image as :latest (for use with Synology, Portainer and others who standard use :latest)
+          #tags: ${{ steps.meta.outputs.tags }}
+          tags: latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -102,15 +104,3 @@ jobs:
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
-      # Tag Image as :latest (for use with Synology, Portainer and others who standard use :latest)
-      - name: Debug Print available tags
-        run: echo "Available tags ${{ steps.meta.outputs.tags }}"
-
-      - name: Tag image as latest
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          TAG=$(echo ${{ steps.meta.outputs.tags }} | cut -d ',' -f 1 | cut -d ':' -f 2)
-          echo "Tag to be used: ${TAG}"
-          docker images
-          docker tag ${{ env.IMAGE_NAME }}:${TAG} ${{ env.IMAGE_NAME }}:latest
-          docker push ${{ env.IMAGE_NAME }}:latest
