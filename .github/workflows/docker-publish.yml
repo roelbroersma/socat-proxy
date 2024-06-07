@@ -104,4 +104,4 @@ jobs:
 
       # Tag image as latest
       - name: Tag image as latest
-        run: docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        run: docker tag ${{ env.IMAGE_NAME }}:main ${{ env.IMAGE_NAME }}:latest
