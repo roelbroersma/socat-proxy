@@ -102,6 +102,10 @@ jobs:
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
-      # Tag image as latest
+      # Tag Image as :latest (for use with Synology, Portainer and others who standard use :latest)
       - name: Tag image as latest
-        run: docker tag ${{ env.IMAGE_NAME }}:main ${{ env.IMAGE_NAME }}:latest
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          docker tag ${{ env.IMAGE_NAME }}:$(echo ${{ steps.meta.outputs.tags }} | sed 's/.*://') ${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.IMAGE_NAME }}:latest
+
