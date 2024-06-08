@@ -106,7 +106,7 @@ check_root_and_capabilities
 if [ $? -eq 1 ]; then
   echo "############################ WARNING #####################################"
   echo "### This script must be run as root or with CAP_NET_ADMIN capability.  ###"
-  echo "### We will continue but host routes and loop protection will probably ###
+  echo "### We will continue but host routes and loop protection will probably ###"
   echo '### not set correctly.						       ###"
   echo "##########################################################################"
 fi
