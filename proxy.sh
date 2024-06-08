@@ -61,7 +61,7 @@ remove_routes() {
 }
 
 # FUNCTION TO REMOVE THE IPTABLES RULES THAT WE ADDED DURING OUR STARTUP (NEEDED FOR LOOP PROTECTION)
-remove_routes() {
+remove_iptables() {
   echo "Removing IPTables rules..."
     iptables -D INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
 }
