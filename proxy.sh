@@ -110,6 +110,7 @@ fi
 echo "Adding route to $MULTICAST_ADDRESS via $FROM_IP..."
 route add -host $MULTICAST_ADDRESS gw $FROM_IP
 
+# ADDING IPTABLES FOR EXTRA LOOP PROTECTION, THE ip-multicast-loop=0 FROM SOCAT DOESNT WORK, PROBABLY BECAUSE WE USE MULTIPLE SOCAT PROCESSES AND THEY ARE NOT AWARE OF EACH OTHER
 echo "Adding IPTables loop protection to refuse incomming multicast packets to $MULTICAST_ADDRESS:$MULTICAST_PORT with SOURCE: $FROM_IP."
 iptables -A INPUT -s $FROM_IP -d $MULTICAST_IP -p udp --dport $MULTICAST_PORT -j DROP
 
