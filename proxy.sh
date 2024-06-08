@@ -92,21 +92,21 @@ check_root_and_capabilities
 if [ $? -eq 1 ]; then
   echo "#########################################################################"
   echo "### This script must be run as root or with CAP_NET_ADMIN capability. ###"
-  echo "### We will continue but are unable to set host routes.		      ###"
+  echo "### We will continue but host routes are probably no set correctly.   ###"
   echo "#########################################################################"
-else
-   # BECAUSE THE RECEIVER MIGHT HAVE MULTIPLE INTERFACES, WE NEED TO MAKE SURE TO ROUTE OUT THE MULTICAST VIA THE CORRECT INTERFACE (WHICH IS THE $FROM_IP_OR_INTERFACE).
-   # (NOTE THAT THIS ROUTE WILL BE APPLIED TO THE WHOLE HOST BECAUSE IT USES THE HOST NETWORK INTERFACE)
-   echo "Adding route to $MULTICAST_ADDRESS via $FROM_IP_OR_INTERFACE..."
-   if echo "$FROM_IP_OR_INTERFACE" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
-      route add -host $MULTICAST_ADDRESS gw $FROM_IP_OR_INTERFACE
-   else
-      route add -host $MULTICAST_ADDRESS dev $FROM_IP_OR_INTERFACE
-   fi
-
-   # REMOVE THE ROUTES WHEN THIS SCRIPT OR DOCKER CONTAINER STOPS
-   trap remove_routes EXIT
 fi
+
+# BECAUSE THE RECEIVER MIGHT HAVE MULTIPLE INTERFACES, WE NEED TO MAKE SURE TO ROUTE OUT THE MULTICAST VIA THE CORRECT INTERFACE (WHICH IS THE $FROM_IP_OR_INTERFACE).
+# (NOTE THAT THIS ROUTE WILL BE APPLIED TO THE WHOLE HOST BECAUSE IT USES THE HOST NETWORK INTERFACE)
+echo "Adding route to $MULTICAST_ADDRESS via $FROM_IP_OR_INTERFACE..."
+if echo "$FROM_IP_OR_INTERFACE" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+   route add -host $MULTICAST_ADDRESS gw $FROM_IP_OR_INTERFACE
+else
+   route add -host $MULTICAST_ADDRESS dev $FROM_IP_OR_INTERFACE
+fi
+
+# REMOVE THE ROUTES WHEN THIS SCRIPT OR DOCKER CONTAINER STOPS
+trap remove_routes EXIT
 
 # START SENDER AND RECEIVER
 start_sender
