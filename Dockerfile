@@ -1,5 +1,5 @@
 # USE ALPINE BASE IMAGE, THIS HAS SOCAT 1.8.0.0 NOWADAYS :)
-FROM alpine:latest
+FROM debian:latest
 
 # INSTALL SOCAT, ROUTE, IPTABLES, TCPDUMP (for debug/troubleshoot) AND LIBCAP (FOR CAPSH)
 RUN apk add --no-cache socat iproute2 iptables-legacy tcpdump libcap
