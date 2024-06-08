@@ -49,7 +49,7 @@ start_sender() {
 start_receiver() {
   echo "Starting the receiver..."
   while true; do
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP_OR_INTERFACE,reuseaddr,fork UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP_OR_INTERFACE,reuseaddr,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT
      echo "Receiver process stopped, restarting..."
   done
 }
