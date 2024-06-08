@@ -112,7 +112,7 @@ else
 fi
 
 # REMOVE THE ROUTES WHEN THIS SCRIPT OR DOCKER CONTAINER STOPS
-trap remove_routes EXIT
+trap remove_routes EXIT TERM
 
 # START SENDER AND RECEIVER
 start_sender &
