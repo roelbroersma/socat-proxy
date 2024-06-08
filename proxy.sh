@@ -63,7 +63,7 @@ remove_routes() {
 # FUNCTION TO REMOVE THE IPTABLES RULES THAT WE ADDED DURING OUR STARTUP (NEEDED FOR LOOP PROTECTION)
 remove_routes() {
   echo "Removing IPTables rules..."
-    iptables -D INPUT -s $FROM_IP -d $MULTICAST_IP -p udp --dport $MULTICAST_PORT -j DROP
+    iptables -D INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
 }
 
 # CHECK IF MULTICAST_PORT IS GIVEN
@@ -112,7 +112,8 @@ route add -host $MULTICAST_ADDRESS gw $FROM_IP
 
 # ADDING IPTABLES FOR EXTRA LOOP PROTECTION, THE ip-multicast-loop=0 FROM SOCAT DOESNT WORK, PROBABLY BECAUSE WE USE MULTIPLE SOCAT PROCESSES AND THEY ARE NOT AWARE OF EACH OTHER
 echo "Adding IPTables loop protection to refuse incomming multicast packets to $MULTICAST_ADDRESS:$MULTICAST_PORT with SOURCE: $FROM_IP."
-iptables -A INPUT -s $FROM_IP -d $MULTICAST_IP -p udp --dport $MULTICAST_PORT -j DROP
+iptables -A INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
+iptables -A INPUT -s 10.0.4.5 -d 224.0.23.12 -p udp --dport 3671 -j DROP
 
 # REMOVE THE ROUTES WHEN THIS SCRIPT OR DOCKER CONTAINER STOPS
 trap remove_routes EXIT TERM
