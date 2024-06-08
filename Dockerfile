@@ -7,6 +7,10 @@ RUN apk add --no-cache socat iproute2 iptables libcap
 # COPY OUR GREAT SOCAT SCRIPT TO THE ENTRYPOINT
 COPY proxy.sh /usr/local/bin/entrypoint.sh
 
+# CREATE SYMBOLIC LINKS TO USE iptables-legacy AS THE DEFAULT iptables BECAUSE SOME HOSTS (I.E. SYNOLOGY NAS) HAVE PROBLEMS WITH IPTABLES
+RUN ln -sf /usr/sbin/iptables-legacy /usr/sbin/iptables && \
+    ln -sf /usr/sbin/ip6tables-legacy /usr/sbin/ip6tables
+
 # GIVE EXEC PERMISSION
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
