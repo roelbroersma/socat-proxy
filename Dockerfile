@@ -2,7 +2,7 @@
 FROM alpine:latest
 
 # INSTALL SOCAT, ROUTE, IPTABLES, TCPDUMP (for debug/troubleshoot) AND LIBCAP (FOR CAPSH)
-RUN apk add --no-cache socat iproute2 iptables tcpdump libcap
+RUN apk add --no-cache socat iproute2 iptables iptables-legacy tcpdump libcap
 
 # COPY OUR GREAT SOCAT SCRIPT TO THE ENTRYPOINT
 COPY proxy.sh /usr/local/bin/entrypoint.sh
