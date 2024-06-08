@@ -40,7 +40,7 @@ echo "WATCHDOG timeout set to $SOCAT_TIMEOUT seconds."
 start_sender() {
   echo "Starting the sender..."
   while true; do
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP_OR_INTERFACE,reuseaddr,reuseport,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP,reuseaddr,reuseport,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
      echo "Sender process stopped, restarting..."
   done
 }
@@ -49,19 +49,21 @@ start_sender() {
 start_receiver() {
   echo "Starting the receiver..."
   while true; do
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP_OR_INTERFACE,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP_OR_INTERFACE,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
      echo "Receiver process stopped, restarting..."
   done
 }
 
-# FUNCTION TO REMOVE THE ROUTES THAT WE ADD DURING OUR STARTUP (NEEDED BECAUSE WE ADD ROUTES TO THE NETWORK STACK OF THE HOST)
+# FUNCTION TO REMOVE THE ROUTES THAT WE ADDED DURING OUR STARTUP (NEEDED BECAUSE WE ADD ROUTES TO THE NETWORK STACK OF THE HOST)
 remove_routes() {
   echo "Removing routes..."
-	if echo "$FROM_IP_OR_INTERFACE" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
-		route del -host $MULTICAST_ADDRESS gw $FROM_IP_OR_INTERFACE
-	else
-		route del -host $MULTICAST_ADDRESS dev $FROM_IP_OR_INTERFACE
-	fi
+    route del -host $MULTICAST_ADDRESS gw $FROM_IP
+}
+
+# FUNCTION TO REMOVE THE IPTABLES RULES THAT WE ADDED DURING OUR STARTUP (NEEDED FOR LOOP PROTECTION)
+remove_routes() {
+  echo "Removing IPTables rules..."
+    iptables -D INPUT -s $FROM_IP -d $MULTICAST_IP -p udp --dport $MULTICAST_PORT -j DROP
 }
 
 # CHECK IF MULTICAST_PORT IS GIVEN
@@ -82,9 +84,9 @@ if [ -z "$VIA_PORT" ]; then
   exit 1
 fi
 
-# CHECK IF FROM_IP_OR_INTERFACE IS GIVEN
-if [ -z "$FROM_IP_OR_INTERFACE" ]; then
-  echo "Please, specify the IP or INTERFACE on which you expect this multicast to arrive, we will join this interface or IP address to the multicast group. I.e.: ovs_bond0, eth0, or 192.168.0.10."
+# CHECK IF FROM_IP IS GIVEN
+if [ -z "$FROM_IP" ]; then
+  echo "Please, specify the IP on which you expect this multicast to arrive, we will join this IP address to the multicast group. I.e.: 192.168.0.10."
   exit;
 fi
 
@@ -96,23 +98,24 @@ fi
 
 check_root_and_capabilities
 if [ $? -eq 1 ]; then
-  echo "#########################################################################"
-  echo "### This script must be run as root or with CAP_NET_ADMIN capability. ###"
-  echo "### We will continue but host routes are probably not set correctly.  ###"
-  echo "#########################################################################"
+  echo "############################ WARNING #####################################"
+  echo "### This script must be run as root or with CAP_NET_ADMIN capability.  ###"
+  echo "### We will continue but host routes and loop protection will probably ###
+  echo '### not set correctly.						       ###"
+  echo "##########################################################################"
 fi
 
-# BECAUSE THE RECEIVER MIGHT HAVE MULTIPLE INTERFACES, WE NEED TO MAKE SURE TO ROUTE OUT THE MULTICAST VIA THE CORRECT INTERFACE (WHICH IS THE $FROM_IP_OR_INTERFACE).
+# BECAUSE THE RECEIVER MIGHT HAVE MULTIPLE INTERFACES, WE NEED TO MAKE SURE TO ROUTE OUT THE MULTICAST VIA THE CORRECT INTERFACE (WHICH IS THE $FROM_IP).
 # (NOTE THAT THIS ROUTE WILL BE APPLIED TO THE WHOLE HOST BECAUSE IT USES THE HOST NETWORK INTERFACE)
-echo "Adding route to $MULTICAST_ADDRESS via $FROM_IP_OR_INTERFACE..."
-if echo "$FROM_IP_OR_INTERFACE" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
-   route add -host $MULTICAST_ADDRESS gw $FROM_IP_OR_INTERFACE
-else
-   route add -host $MULTICAST_ADDRESS dev $FROM_IP_OR_INTERFACE
-fi
+echo "Adding route to $MULTICAST_ADDRESS via $FROM_IP..."
+route add -host $MULTICAST_ADDRESS gw $FROM_IP
+
+echo "Adding IPTables loop protection to refuse incomming multicast packets to $MULTICAST_ADDRESS:$MULTICAST_PORT with SOURCE: $FROM_IP."
+iptables -A INPUT -s $FROM_IP -d $MULTICAST_IP -p udp --dport $MULTICAST_PORT -j DROP
 
 # REMOVE THE ROUTES WHEN THIS SCRIPT OR DOCKER CONTAINER STOPS
 trap remove_routes EXIT TERM
+trap remove_iptables EXIT TERM
 
 # START SENDER AND RECEIVER
 start_sender &
