@@ -1,6 +1,14 @@
 #!/bin/sh
 
-# Enable Debugging in SOCAT Style
+# FUNCTION TO CHECK FOR ROOT PRIVILEGES OR CAP_NET_ADMIN REQUIRED CAPABILITIES
+check_root_and_capabilities() {
+   if [ "$(id -u)" -ne 0 ] || ! capsh --print | grep -q 'cap_net_admin'; then
+     return 1
+   fi
+   return 0
+}
+
+# ENABLE DEBUGGING IN SOCAT STYLE, USING (MULTIPLE) -D
 SOCAT_DEBUG_LEVEL=""
 if [ -n "$DEBUG" ]; then
   case "$DEBUG" in
@@ -26,6 +34,7 @@ SOCAT_TIMEOUT=3
 if [ -n "$WATCHDOG" ]; then
 	SOCAT_TIMEOUT=$WATCHDOG
 fi
+echo "WATCHDOG timeout set to $SOCAT_TIMEOUT seconds."
 
 # FUNCTION TO START THE SENDER. LISTEN TO MULTICASTS AND FORWARD THEM TO ANOTHER IP ADDRESS (WHICH RECEIVES THEM AND SENDS THEM OUT AS MULTICASTS).
 start_sender() {
@@ -79,17 +88,25 @@ if [ -z "$TO_ADDRESS" ]; then
   exit 1
 fi
 
-# BECAUSE THE RECEIVER MIGHT HAVE MULTIPLE INTERFACES, WE NEED TO MAKE SURE TO ROUTE OUT THE MULTICAST VIA THE CORRECT INTERFACE (WHICH IS THE $FROM_IP_OR_INTERFACE).
-# (NOTE THAT THIS ROUTE WILL BE APPLIED TO THE WHOLE HOST BECAUSE IT USES THE HOST NETWORK INTERFACE)
-echo "Adding route to this multicast address via $FROM_IP_OR_INTERFACE."
-if echo "$FROM_IP_OR_INTERFACE" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
-	route add -host $MULTICAST_ADDRESS gw $FROM_IP_OR_INTERFACE
+check_root_and_capabilities
+if [ $? -eq 1 ]; then
+  echo "#########################################################################"
+  echo "### This script must be run as root or with CAP_NET_ADMIN capability. ###"
+  echo "### We will continue but are unable to set host routes.		      ###"
+  echo "#########################################################################"
 else
-	route add -host $MULTICAST_ADDRESS dev $FROM_IP_OR_INTERFACE
-fi
+   # BECAUSE THE RECEIVER MIGHT HAVE MULTIPLE INTERFACES, WE NEED TO MAKE SURE TO ROUTE OUT THE MULTICAST VIA THE CORRECT INTERFACE (WHICH IS THE $FROM_IP_OR_INTERFACE).
+   # (NOTE THAT THIS ROUTE WILL BE APPLIED TO THE WHOLE HOST BECAUSE IT USES THE HOST NETWORK INTERFACE)
+   echo "Adding route to this multicast address via $FROM_IP_OR_INTERFACE."
+   if echo "$FROM_IP_OR_INTERFACE" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+      route add -host $MULTICAST_ADDRESS gw $FROM_IP_OR_INTERFACE
+   else
+      route add -host $MULTICAST_ADDRESS dev $FROM_IP_OR_INTERFACE
+   fi
 
-# REMOVE THE ROUTES WHEN THIS SCRIPT OR DOCKER CONTAINER STOPS
-trap remove_routes EXIT
+   # REMOVE THE ROUTES WHEN THIS SCRIPT OR DOCKER CONTAINER STOPS
+   trap remove_routes EXIT
+fi
 
 # START SENDER AND RECEIVER
 start_sender
