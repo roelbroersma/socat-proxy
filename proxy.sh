@@ -67,8 +67,8 @@ remove_routes() {
 remove_iptables() {
   echo "Removing IPTables rules..."
   # DO THIS IN A WHILE SO WE REMOVE ALL THE RULES THAT MATCH THIS ONE (MAYBE SOME WHERE LEFT WHEN THE CONTAINER DIDNT PROPERLY SHUT DOWN)
-  while iptables-legacy -C INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP 2>/dev/null; do
-    iptables-legacy -D INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
+  while iptables -C INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP 2>/dev/null; do
+    iptables -D INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
   done
 }
 
@@ -123,8 +123,8 @@ fi
 # ADDING IPTABLES FOR EXTRA LOOP PROTECTION, THE ip-multicast-loop=0 FROM SOCAT DOESNT WORK, PROBABLY BECAUSE WE USE MULTIPLE SOCAT PROCESSES AND THEY ARE NOT AWARE OF EACH OTHER
 echo "Adding IPTables loop protection to refuse incomming multicast packets to $MULTICAST_ADDRESS:$MULTICAST_PORT with SOURCE: $FROM_IP."
 # ONLY ADD IF THE RULE DOESNT EXISTS YET
-if ! iptables-legacy -C INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP 2>/dev/null; then
-    iptables-legacy -A INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
+if ! iptables -C INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP 2>/dev/null; then
+    iptables -A INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
 else
    echo "Not adding iptables rule because it already exists."
 fi
