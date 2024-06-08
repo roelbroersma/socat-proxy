@@ -40,7 +40,7 @@ echo "WATCHDOG timeout set to $SOCAT_TIMEOUT seconds."
 start_sender() {
   echo "Starting the sender..."
   while true; do
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP_OR_INTERFACE,reuseaddr,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP_OR_INTERFACE,reuseaddr,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT
      echo "Sender process stopped, restarting..."
   done
 }
@@ -49,7 +49,7 @@ start_sender() {
 start_receiver() {
   echo "Starting the receiver..."
   while true; do
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP_OR_INTERFACE,reuseaddr,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP_OR_INTERFACE,reuseaddr,fork UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT
      echo "Receiver process stopped, restarting..."
   done
 }
@@ -98,7 +98,7 @@ check_root_and_capabilities
 if [ $? -eq 1 ]; then
   echo "#########################################################################"
   echo "### This script must be run as root or with CAP_NET_ADMIN capability. ###"
-  echo "### We will continue but host routes are probably no set correctly.   ###"
+  echo "### We will continue but host routes are probably not set correctly.  ###"
   echo "#########################################################################"
 fi
 
