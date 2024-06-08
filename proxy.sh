@@ -60,7 +60,7 @@ remove_routes() {
 	if echo "$FROM_IP_OR_INTERFACE" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
 		route del -host $MULTICAST_ADDRESS gw $FROM_IP_OR_INTERFACE
 	else
-		route del --host $MULTICAST_ADDRESS dev $FROM_IP_OR_INTERFACE
+		route del -host $MULTICAST_ADDRESS dev $FROM_IP_OR_INTERFACE
 	fi
 }
 
