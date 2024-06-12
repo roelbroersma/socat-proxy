@@ -13,6 +13,8 @@ Socat Proxy is the ultimate multicast proxy for forwarding MDNS, KNX, and other 
 ## Requirements
 
 - **Docker** with root privileges or CAP_NET_ADMIN capabilities (for configuring network settings);
+
+or
 - When using a **Linux operating system**:
   - Linux operating system (or similar)
   - Bash shell
