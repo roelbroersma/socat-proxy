@@ -23,7 +23,7 @@ or
 ## Docker
 Socat Proxy can be run as a Docker container. You can pull the Docker image from Docker Hub:
 
-docker pull roeller/socat-proxy:latest
+`docker pull roeller/socat-proxy:latest`
 
 Then, run the container with the appropriate environment variables:
 
