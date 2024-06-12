@@ -21,6 +21,32 @@ check_root_and_capabilities() {
    return 1
 }
 
+#FUNCTION WHICH DISPLAY THE USAGE (DOCKER AND COMMAND LINE)
+display_usage() {
+   echo ""
+   echo "Use docker with environment variables: MULTICAST_ADDRESS, MULTICAST_PORT, FROM_IP, TO_ADDRESS, VIA_PORT and optionally: DEBUG, DEBUG_PACKET and WATCHDOG."
+   echo "or use the following command line options:"
+   echo ""
+   echo "Usage:"
+   echo "./proxy.sh --multicast_address=224.0.0.251 --multicast_port=5353 --from_ip=192.168.0.1 --to_address=10.0.0.1 --via_port=5354 --debug=2 --debug_packet=2 --watchdog=10"
+   echo ""
+   echo "OPTIONS (mandatory)"
+   echo " --multicast_address=  The multicast IP addres you want to listen/capture"
+   echo " --multicast_port=	The multicast port you wan to listen/capture"
+   echo " --from_ip=            The IP address (of your local interface) on which you expect the multicasts"
+   echo " --to_address=         The IP address to which you want to send/forward the multicasts"
+   echo " --via_port=           The udp port to use when sending it to the destination IP address, use another port than multicast_port! (tip: 1 number higher)"
+   echo ""
+   echo "OPTIONS (optional)"
+   echo " --debug=              1=only errors, 2=errors+warnings, 3=errors+warnings+info, 4=errors+warnings+info+debug"
+   echo " --debug_packet=	1=basic tcpdump output, 2=verbose tcpdump output, 3=tcpdump verbose + packet payload in ASCI (handy for MDNS/SSDP!)"
+   echo " --watchdog=		After this many seconds of inactivity, the process will restart internally (default=3)"
+   echo ""
+   echo ""
+   echo "Docker example:"
+   echo "  docker run -e MULTICAST_ADDRESS=<value> -e MULTICAST_PORT=<value> -e FROM_IP=<value> -e TO_ADDRESS=<value> -e VIA_PORT=<value> roeller/socat-proxy:latest"
+}
+
 # PARSE COMMAND LINE ARGUMENTS (IF STARTED FROM COMMAND LINE, OTHERWISE TAKE THE ENVIRONMENT VARIABLES BECAUSE PROBABLY USED AS DOCKER CONTAINER)
 while [ $# -gt 0 ]; do
   case "$1" in
