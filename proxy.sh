@@ -8,6 +8,51 @@ check_root_and_capabilities() {
    return 1
 }
 
+# PARSE COMMAND LINE ARGUMENTS (IF STARTED FROM COMMAND LINE, OTHERWISE TAKE THE ENVIRONMENT VARIABLES BECAUSE PROBABLY USED AS DOCKER CONTAINER)
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --*=*)
+      key="${1%%=*}"  # EXTRACT THE OPTION PART BEFORE '='
+      value="${1#*=}" # EXTRACT THE OPTION PART AFTER '='
+      case "$key" in
+        --multicast-address)
+          MULTICAST_ADDRESS="$value"
+          ;;
+        --multicast-port)
+          MULTICAST_PORT="$value"
+          ;;
+        --via-port)
+          VIA_PORT="$value"
+          ;;
+        --from-ip)
+          FROM_IP="$value"
+          ;;
+        --to-address)
+          TO_ADDRESS="$value"
+          ;;
+        --debug)
+          DEBUG="$value"
+          ;;
+        --debug-packet)
+          DEBUG_PACKET="$value"
+          ;;
+        --watchdog)
+          WATCHDOG="$value"
+          ;;
+        *)
+          echo "Unknown option: $1"
+          exit 1
+          ;;
+      esac
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
+
 # ENABLE DEBUGGING IN SOCAT STYLE, USING (MULTIPLE) -D
 SOCAT_DEBUG_LEVEL=""
 if [ -n "$DEBUG" ]; then
