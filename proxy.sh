@@ -2,10 +2,10 @@
 
 # FUNCTION TO CHECK FOR ROOT PRIVILEGES OR CAP_NET_ADMIN REQUIRED CAPABILITIES
 check_root_and_capabilities() {
-   if [ "$(id -u)" -ne 0 ] || ! capsh --print | grep -q 'cap_net_admin'; then
-     return 1
+   if [ "$(id -u)" -eq 0 ] || capsh --print | grep -q 'cap_net_admin'; then
+     return 0
    fi
-   return 0
+   return 1
 }
 
 # ENABLE DEBUGGING IN SOCAT STYLE, USING (MULTIPLE) -D
