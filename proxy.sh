@@ -30,6 +30,25 @@ if [ -n "$DEBUG" ]; then
   esac
 fi
 
+# ENABLE DEBUG PACKETS WITH TCPDUMP
+if [ -n "$DEBUG_PACKET" ]; then
+  case "$DEBUG_PACKET" in
+    1)
+      TCPDUMP_OPTIONS=""
+      ;;
+    2)
+      TCPDUMP_OPTIONS="-vv"
+      ;;
+    3)
+      TCPDUMP_OPTIONS="-vv -A"
+      ;;
+    *)
+      TCPDUMP_OPTIONS=""
+      ;;
+   esac
+  fi
+
+# SET SOCAT TIMEOUT/WATCHDOG (IT QUITS AFTER THIS SECONDS OF INACTIVITY)
 SOCAT_TIMEOUT=3
 if [ -n "$WATCHDOG" ]; then
 	SOCAT_TIMEOUT=$WATCHDOG
@@ -136,6 +155,11 @@ trap remove_iptables EXIT TERM
 # START SENDER AND RECEIVER
 start_sender &
 start_receiver &
+
+# START TCPDUMP (IF DEBUG_PACKET) IS ENABLED
+if [ -n "$DEBUG_PACKET" ]; then
+   tcpdump -i any '((dst host $MULTICAST_ADDRESS and udp dst port $MULTICAST_PORT) or (dst host $TO_ADDRESS and udp dst port $VIA_PORT))' $TCPDUMP_OPTIONS &
+fi
 
 # KEEP THE SCRIPT ACTIVE BY USING WAIT
 while true; do
