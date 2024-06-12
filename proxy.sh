@@ -8,7 +8,7 @@ check_root_and_capabilities() {
    
    # CHECK IF THE 'CAPSH' COMMAND IS AVAILABLE
    if ! command -v capsh >/dev/null 2>&1; then
-     echo "Error: 'capsh' command not found. Unable to check capabilities." >&2
+     echo "WARNING: 'capsh' command not found. Unable to check capabilities." >&2
      return 1
    fi
    
@@ -79,7 +79,7 @@ while [ $# -gt 0 ]; do
           WATCHDOG="$value"
           ;;
         *)
-          echo "Unknown option: $1"
+          echo "ERROR: Unknown option: $1"
 	  display_usage
           exit 1
           ;;
@@ -87,7 +87,7 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     *)
-      echo "Unknown option: $1"
+      echo "ERROR: Unknown option: $1"
       display_usage
       exit 1
       ;;
@@ -136,35 +136,35 @@ fi
 
 # CHECK IF MULTICAST_PORT IS GIVEN
 if [ -z "$MULTICAST_ADDRESS" ]; then
-  echo "Please, specify for which MULTICAST_ADDRESS you want to run this proxy. I.e. for MDNS the MULTICAST_ADDRESS is 224.0.0.251."
+  echo "ERROR: Please, specify for which MULTICAST_ADDRESS you want to run this proxy. I.e. for MDNS the MULTICAST_ADDRESS is 224.0.0.251."
   display_usage
   exit 1
 fi
 
 # CHECK IF MULTICAST_PORT IS GIVEN
 if [ -z "$MULTICAST_PORT" ]; then
-  echo "Please, specify for which MULTICAST_PORT you want to run this proxy. I.e. for MDNS, the MULTICAST_PORT is 5353."
+  echo "ERROR: Please, specify for which MULTICAST_PORT you want to run this proxy. I.e. for MDNS, the MULTICAST_PORT is 5353."
   display_usage
   exit 1
 fi
 
 # CHECK IF VIA_PORT IS GIVEN
 if [ -z "$VIA_PORT" ]; then
-  echo "Please, specify the VIA_PORT, which is the port you use between sender and receiver."
+  echo "ERROR: Please, specify the VIA_PORT, which is the port you use between sender and receiver."
   display_usage
   exit 1
 fi
 
 # CHECK IF FROM_IP IS GIVEN
 if [ -z "$FROM_IP" ]; then
-  echo "Please, specify the FROM_IP on which you expect this multicast to arrive, we will join this IP address to the multicast group. I.e.: 192.168.0.10."
+  echo "ERROR: Please, specify the FROM_IP on which you expect this multicast to arrive, we will join this IP address to the multicast group. I.e.: 192.168.0.10."
   display_usage
   exit 1;
 fi
 
 # CHECK IF TO_ADDRESS IS GIVEN
 if [ -z "$TO_ADDRESS" ]; then
-  echo "Please, specify the TO_ADDRESS, which is the other Proxy instance to which we need to send the (encapsulated) multicasts to. I.e. 145.25.27.10"
+  echo "ERROR: Please, specify the TO_ADDRESS, which is the other Proxy instance to which we need to send the (encapsulated) multicasts to. I.e. 145.25.27.10"
   display_usage
   exit 1
 fi
