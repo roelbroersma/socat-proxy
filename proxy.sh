@@ -158,7 +158,7 @@ start_receiver &
 
 # START TCPDUMP (IF DEBUG_PACKET) IS ENABLED
 if [ -n "$DEBUG_PACKET" ]; then
-   tcpdump -i any '((dst host $MULTICAST_ADDRESS and udp dst port $MULTICAST_PORT) or (dst host $TO_ADDRESS and udp dst port $VIA_PORT))' $TCPDUMP_OPTIONS &
+   tcpdump -n -i any '((dst host $MULTICAST_ADDRESS and udp dst port $MULTICAST_PORT) or (dst host $TO_ADDRESS and udp dst port $VIA_PORT))' $TCPDUMP_OPTIONS &
 fi
 
 # KEEP THE SCRIPT ACTIVE BY USING WAIT
