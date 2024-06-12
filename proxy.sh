@@ -131,52 +131,8 @@ if [ -n "$DEBUG_PACKET" ]; then
     *)
       TCPDUMP_OPTIONS=""
       ;;
-   esac
-  fi
-
-# SET SOCAT TIMEOUT/WATCHDOG (IT QUITS AFTER THIS SECONDS OF INACTIVITY)
-SOCAT_TIMEOUT=3
-if [ -n "$WATCHDOG" ]; then
-	SOCAT_TIMEOUT=$WATCHDOG
+  esac
 fi
-echo "WATCHDOG timeout set to $SOCAT_TIMEOUT seconds."
-
-# FUNCTION TO START THE SENDER. LISTEN TO MULTICASTS AND FORWARD THEM TO ANOTHER IP ADDRESS (WHICH RECEIVES THEM AND SENDS THEM OUT AS MULTICASTS).
-start_sender() {
-  echo "Starting the sender..."
-  while true; do
-     #socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP,reuseaddr,reuseport,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP,reuseaddr,reuseport,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT
-     echo "Sender process stopped, restarting..."
-  done
-}
-
-# FUNCTION TO START THE RECEIVER. LISTEN TO UDP PACKETS FROM THE SENDER (ADDRESSES TO THE SAME PORT AS THE MULTICAST PORT) AND SENDS THEM OUT AS MULTICASTS.
-start_receiver() {
-  echo "Starting the receiver..."
-  while true; do
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT
-     echo "Receiver process stopped, restarting..."
-  done
-}
-
-# FUNCTION TO REMOVE THE ROUTES THAT WE ADDED DURING OUR STARTUP (NEEDED BECAUSE WE ADD ROUTES TO THE NETWORK STACK OF THE HOST)
-remove_routes() {
-  echo "Removing routes..."
-  # DO THIS IN A WHILE SO WE REMOVE ALL THE ROUTES THAT MATCH THIS ONE (MAYBE SOME WHERE LEFT WHEN THE CONTAINER DIDNT PROPERLY SHUT DOWN)
-  while ip route show | grep -q "$MULTICAST_ADDRESS via $FROM_IP"; do
-    ip route del -host $MULTICAST_ADDRESS gw $FROM_IP
-  done
-}
-
-# FUNCTION TO REMOVE THE IPTABLES RULES THAT WE ADDED DURING OUR STARTUP (NEEDED FOR LOOP PROTECTION)
-remove_iptables() {
-  echo "Removing IPTables rules..."
-  # DO THIS IN A WHILE SO WE REMOVE ALL THE RULES THAT MATCH THIS ONE (MAYBE SOME WHERE LEFT WHEN THE CONTAINER DIDNT PROPERLY SHUT DOWN)
-  while iptables -C INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP 2>/dev/null; do
-    iptables -D INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
-  done
-}
 
 # CHECK IF MULTICAST_PORT IS GIVEN
 if [ -z "$MULTICAST_ADDRESS" ]; then
@@ -221,6 +177,50 @@ if [ $? -eq 1 ]; then
   echo "### not set correctly.						       ###"
   echo "##########################################################################"
 fi
+
+# SET SOCAT TIMEOUT/WATCHDOG (IT QUITS AFTER THIS SECONDS OF INACTIVITY)
+SOCAT_TIMEOUT=3
+if [ -n "$WATCHDOG" ]; then
+	SOCAT_TIMEOUT=$WATCHDOG
+fi
+echo "WATCHDOG timeout set to $SOCAT_TIMEOUT seconds."
+
+# FUNCTION TO START THE SENDER. LISTEN TO MULTICASTS AND FORWARD THEM TO ANOTHER IP ADDRESS (WHICH RECEIVES THEM AND SENDS THEM OUT AS MULTICASTS).
+start_sender() {
+  echo "Starting the sender..."
+  while true; do
+     #socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP,reuseaddr,reuseport,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP,reuseaddr,reuseport,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT
+     echo "Sender process stopped, restarting..."
+  done
+}
+
+# FUNCTION TO START THE RECEIVER. LISTEN TO UDP PACKETS FROM THE SENDER (ADDRESSES TO THE SAME PORT AS THE MULTICAST PORT) AND SENDS THEM OUT AS MULTICASTS.
+start_receiver() {
+  echo "Starting the receiver..."
+  while true; do
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT
+     echo "Receiver process stopped, restarting..."
+  done
+}
+
+# FUNCTION TO REMOVE THE ROUTES THAT WE ADDED DURING OUR STARTUP (NEEDED BECAUSE WE ADD ROUTES TO THE NETWORK STACK OF THE HOST)
+remove_routes() {
+  echo "Removing routes..."
+  # DO THIS IN A WHILE SO WE REMOVE ALL THE ROUTES THAT MATCH THIS ONE (MAYBE SOME WHERE LEFT WHEN THE CONTAINER DIDNT PROPERLY SHUT DOWN)
+  while ip route show | grep -q "$MULTICAST_ADDRESS via $FROM_IP"; do
+    ip route del -host $MULTICAST_ADDRESS gw $FROM_IP
+  done
+}
+
+# FUNCTION TO REMOVE THE IPTABLES RULES THAT WE ADDED DURING OUR STARTUP (NEEDED FOR LOOP PROTECTION)
+remove_iptables() {
+  echo "Removing IPTables rules..."
+  # DO THIS IN A WHILE SO WE REMOVE ALL THE RULES THAT MATCH THIS ONE (MAYBE SOME WHERE LEFT WHEN THE CONTAINER DIDNT PROPERLY SHUT DOWN)
+  while iptables -C INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP 2>/dev/null; do
+    iptables -D INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
+  done
+}
 
 # BECAUSE THE RECEIVER MIGHT HAVE MULTIPLE INTERFACES, WE NEED TO MAKE SURE TO ROUTE OUT THE MULTICAST VIA THE CORRECT INTERFACE (WHICH IS THE $FROM_IP)
 # (NOTE THAT THIS ROUTE WILL BE APPLIED TO THE WHOLE HOST BECAUSE IT USES THE HOST NETWORK INTERFACE)
