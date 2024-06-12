@@ -159,7 +159,7 @@ fi
 if [ -z "$FROM_IP" ]; then
   echo "Please, specify the FROM_IP on which you expect this multicast to arrive, we will join this IP address to the multicast group. I.e.: 192.168.0.10."
   display_usage
-  exit;
+  exit 1;
 fi
 
 # CHECK IF TO_ADDRESS IS GIVEN
