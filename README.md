@@ -1,2 +1,66 @@
-# socat-proxy
-Socat Proxy is the ultimate Multicast proxy to proxy MDNS, KNX and other multicast protocols to another VLAN, (vpn)site or network.
+# Socat Proxy
+
+Socat Proxy is the ultimate multicast proxy for forwarding MDNS, KNX, and other multicast protocols to another VLAN, (VPN) site, or network.
+
+## Table of Contents
+
+1. [Requirements](#requirements)
+2. [Usage](#usage)
+3. [Environment Variables](#environment-variables)
+4. [Docker](#docker)
+5. [Notes](#notes)
+
+## Requirements
+
+- Linux operating system (or similar)
+- Bash shell
+- Root privileges or CAP_NET_ADMIN capabilities (for configuring network settings)
+- Docker (optional, for use with Docker container)
+
+## Usage
+
+Before using Socat Proxy, ensure you meet the following requirements:
+
+1. Install the necessary tools, such as `socat` and `tcpdump`, on the system where you intend to use Socat Proxy.
+
+2. Make sure the required environment variables are set (see [Environment Variables](#environment-variables)).
+
+3. Start the script by executing the executable file:
+
+```bash
+./proxy.sh
+```
+
+## Environment Variables
+
+Ensure the following required environment variables are set before starting Socat Proxy:
+
+* MULTICAST_ADDRESS: The multicast IP address you want to listen on.
+* MULTICAST_PORT: The port you want to listen for multicast traffic on.
+* VIA_PORT: The port you want to forward the received multicast traffic to.
+* FROM_IP: The IP address on which you expect to receive the multicast traffic.
+* TO_ADDRESS: The IP address to which you want to forward the multicast traffic.
+
+The following environment variables are optional:
+
+* DEBUG: Can be 1 (=error), 2 (=error+warning), 3(=error+warning+info), 4=(error+warning+info+debugging)
+* DEBUG_PACKET: Can be 1 (=just tcpdump of the packets received by the proxy and sended out by the proxy), 2 (=some verbose info), 3 (=also packet info in text, handy for MDNS and SSDP!)
+* WATCHDOG: Number of seconds of inactivity before the proxy automatically restarts it's process (default=3)
+
+## Docker
+Socat Proxy can also be run as a Docker container. You can pull the Docker image from Docker Hub:
+
+docker pull roeller/socat-proxy:latest
+
+Then, run the container with the appropriate environment variables:
+
+```bash
+docker run -e MULTICAST_ADDRESS=<value> -e MULTICAST_PORT=<value> -e VIA_PORT=<value> -e FROM_IP=<value> -e TO_ADDRESS=<value> roeller/socat-proxy:latest
+```
+
+## Notes
+* This script must be run with root privileges or the correct CAP_NET_ADMIN capabilities to configure network settings.
+
+* Make sure to set up the required environment variables correctly for the script to function as expected.
+
+* For additional debugging or packet logging, you can adjust the environment variables DEBUG and DEBUG_PACKET.
