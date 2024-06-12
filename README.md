@@ -37,8 +37,8 @@ Ensure the following required environment variables are set before starting Soca
 
 * MULTICAST_ADDRESS: The multicast IP address you want to listen on.
 * MULTICAST_PORT: The port you want to listen for multicast traffic on.
-* VIA_PORT: The port you want to forward the received multicast traffic to.
 * FROM_IP: The IP address on which you expect to receive the multicast traffic.
+* VIA_PORT: The port you want to forward the received multicast traffic to.
 * TO_ADDRESS: The IP address to which you want to forward the multicast traffic.
 
 The following environment variables are optional:
