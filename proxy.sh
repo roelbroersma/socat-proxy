@@ -54,25 +54,25 @@ while [ $# -gt 0 ]; do
       key="${1%%=*}"  # EXTRACT THE OPTION PART BEFORE '='
       value="${1#*=}" # EXTRACT THE OPTION PART AFTER '='
       case "$key" in
-        --multicast-address)
+        --multicast_address)
           MULTICAST_ADDRESS="$value"
           ;;
-        --multicast-port)
+        --multicast_port)
           MULTICAST_PORT="$value"
           ;;
-        --via-port)
+        --via_port)
           VIA_PORT="$value"
           ;;
-        --from-ip)
+        --from_ip)
           FROM_IP="$value"
           ;;
-        --to-address)
+        --to_address)
           TO_ADDRESS="$value"
           ;;
         --debug)
           DEBUG="$value"
           ;;
-        --debug-packet)
+        --debug_packet)
           DEBUG_PACKET="$value"
           ;;
         --watchdog)
