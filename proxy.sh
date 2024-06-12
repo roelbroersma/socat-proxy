@@ -2,9 +2,22 @@
 
 # FUNCTION TO CHECK FOR ROOT PRIVILEGES OR CAP_NET_ADMIN REQUIRED CAPABILITIES
 check_root_and_capabilities() {
-   if [ "$(id -u)" -eq 0 ] || capsh --print | grep -q 'cap_net_admin'; then
-     return 0
+   if [ "$(id -u)" -eq 0 ]; then
+     return 0 # RETURN 0 IF USER IS ROOT
    fi
+   
+   # CHECK IF THE 'CAPSH' COMMAND IS AVAILABLE
+   if ! command -v capsh >/dev/null 2>&1; then
+     echo "Error: 'capsh' command not found. Unable to check capabilities." >&2
+     return 1
+   fi
+   
+   # CHECK IF THE USER HAS CAP_NET_ADMIN CAPABILITY
+   if capsh --print | grep -q 'cap_net_admin'; then
+     return 0 # RETURN 0 IF USER HAS CAP_NET_ADMIN CAPABILITY
+   fi
+
+   #IF NEITHER ROOT NOR CAP_NET_ADMIN CAPABILITY IS PRESENT, RETURN 1
    return 1
 }
 
@@ -180,7 +193,7 @@ fi
 echo "Adding route to $MULTICAST_ADDRESS via $FROM_IP..."
 # ONLY ADD IF THE ROUTE DOESNT EXISTS YET
 if ! ip route show | grep -q "$MULTICAST_ADDRESS via $FROM_IP"; then
-  route add -host $MULTICAST_ADDRESS gw $FROM_IP
+  ip route add -host $MULTICAST_ADDRESS gw $FROM_IP
 fi
 
 
