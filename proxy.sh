@@ -191,7 +191,9 @@ start_sender() {
   while true; do
      #socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP,reuseaddr,reuseport,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT > >(tee -a /dev/stdout) 2> >(tee -a /dev/stderr)
      socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECV:$MULTICAST_PORT,bind=$MULTICAST_ADDRESS,ip-add-membership=$MULTICAST_ADDRESS:$FROM_IP,reuseaddr,reuseport,ip-multicast-loop=0 UDP4-SENDTO:$TO_ADDRESS:$VIA_PORT
+     echo ""
      echo "Sender process stopped, restarting..."
+     echo ""
   done
 }
 
@@ -200,13 +202,17 @@ start_receiver() {
   echo "Starting the receiver..."
   while true; do
      socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT
+     echo ""
      echo "Receiver process stopped, restarting..."
+     echo ""
   done
 }
 
 # FUNCTION TO REMOVE THE ROUTES THAT WE ADDED DURING OUR STARTUP (NEEDED BECAUSE WE ADD ROUTES TO THE NETWORK STACK OF THE HOST)
 remove_routes() {
+  echo ""
   echo "Removing routes..."
+  echo ""
   # DO THIS IN A WHILE SO WE REMOVE ALL THE ROUTES THAT MATCH THIS ONE (MAYBE SOME WHERE LEFT WHEN THE CONTAINER DIDNT PROPERLY SHUT DOWN)
   while ip route show | grep -q "$MULTICAST_ADDRESS via $FROM_IP"; do
     ip route del -host $MULTICAST_ADDRESS gw $FROM_IP
@@ -215,7 +221,9 @@ remove_routes() {
 
 # FUNCTION TO REMOVE THE IPTABLES RULES THAT WE ADDED DURING OUR STARTUP (NEEDED FOR LOOP PROTECTION)
 remove_iptables() {
+  echo ""
   echo "Removing IPTables rules..."
+  echo ""
   # DO THIS IN A WHILE SO WE REMOVE ALL THE RULES THAT MATCH THIS ONE (MAYBE SOME WHERE LEFT WHEN THE CONTAINER DIDNT PROPERLY SHUT DOWN)
   while iptables -C INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP 2>/dev/null; do
     iptables -D INPUT -s $FROM_IP -d $MULTICAST_ADDRESS -p udp --dport $MULTICAST_PORT -j DROP
