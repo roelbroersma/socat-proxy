@@ -13,8 +13,8 @@ check_root_and_capabilities() {
      return 1
    fi
    
-   # CHECK IF THE USER HAS CAP_NET_ADMIN CAPABILITY
-   if ! capsh --print | grep -q 'cap_net_admin'; then
+   # CHECK IF THE USER HAS CAP_NET_ADMIN CAPABILITY (IN TWO WAYS)
+   if capsh --print | grep -q '!cap_net_admin' || ! capsh --print | grep -q 'cap_net_admin'; then
      return 1 # RETURN 1 IF USER DOES NOT HAVE CAP_NET_ADMIN CAPABILITY
    fi
 
