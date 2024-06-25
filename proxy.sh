@@ -2,6 +2,7 @@
 
 # FUNCTION TO CHECK FOR ROOT PRIVILEGES OR CAP_NET_ADMIN REQUIRED CAPABILITIES
 check_root_and_capabilities() {
+   # CHECK IF USER IS ROOT
    if [ "$(id -u)" -ne 0 ]; then
      return 1 # RETURN 1 IF USER IS NOT ROOT
    fi
