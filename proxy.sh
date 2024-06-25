@@ -2,8 +2,8 @@
 
 # FUNCTION TO CHECK FOR ROOT PRIVILEGES OR CAP_NET_ADMIN REQUIRED CAPABILITIES
 check_root_and_capabilities() {
-   if [ "$(id -u)" -eq 0 ]; then
-     return 0 # RETURN 0 IF USER IS ROOT
+   if [ "$(id -u)" -ne 0 ]; then
+     return 1 # RETURN 1 IF USER IS NOT ROOT
    fi
    
    # CHECK IF THE 'CAPSH' COMMAND IS AVAILABLE
@@ -13,12 +13,12 @@ check_root_and_capabilities() {
    fi
    
    # CHECK IF THE USER HAS CAP_NET_ADMIN CAPABILITY
-   if capsh --print | grep -q 'cap_net_admin'; then
-     return 0 # RETURN 0 IF USER HAS CAP_NET_ADMIN CAPABILITY
+   if ! capsh --print | grep -q 'cap_net_admin'; then
+     return 1 # RETURN 1 IF USER DOES NOT HAVE CAP_NET_ADMIN CAPABILITY
    fi
 
-   # IF NEITHER ROOT NOR CAP_NET_ADMIN CAPABILITY IS PRESENT, RETURN 1
-   return 1
+   # IF USER IS ROOT AND HAS CAP_NET_ADMIN CAPABILITY IS PRESENT, RETURN 0
+   return 0
 }
 
 # FUNCTION WHICH DISPLAY THE USAGE (DOCKER AND COMMAND LINE)
@@ -172,7 +172,9 @@ fi
 check_root_and_capabilities
 if [ $? -eq 1 ]; then
   echo "############################ WARNING #####################################"
-  echo "### This script must be run as root or with CAP_NET_ADMIN capability.  ###"
+  echo "### This script must be run as root which can achieved by running      ###"
+  echo "### this container in privileged mode or by running it with            ###"
+  echo "### CAP_NET_ADMIN capability.                                          ###"
   echo "### We will continue but host routes and loop protection will probably ###"
   echo "### not set correctly.						       ###"
   echo "##########################################################################"
