@@ -72,7 +72,7 @@ while [ $# -gt 0 ]; do
           TO_ADDRESS="$value"
           ;;
 	--ttl)
- 	  TTL=="$value"
+ 	  TTL="$value"
     	  ;;
         --debug)
           DEBUG="$value"
