@@ -39,7 +39,7 @@ display_usage() {
    echo " --via_port=           The udp port to use when sending it to the destination IP address, use another port than multicast_port! (tip: 1 number higher)"
    echo ""
    echo "OPTIONS (optional)"
-   echo " --ttl=		default=1, Time-To-Live of forwarded/proxied packets"
+   echo " --ttl=                default=1, Time-To-Live of forwarded/proxied packets"
    echo " --debug=              1=only errors, 2=errors+warnings, 3=errors+warnings+info, 4=errors+warnings+info+debug"
    echo " --debug_packet=       1=basic tcpdump output, 2=verbose tcpdump output, 3=tcpdump verbose + packet payload in ASCI (handy for MDNS/SSDP!)"
    echo " --watchdog=           After this many seconds of inactivity, the process will restart internally (default=3)"
