@@ -39,6 +39,7 @@ display_usage() {
    echo " --via_port=           The udp port to use when sending it to the destination IP address, use another port than multicast_port! (tip: 1 number higher)"
    echo ""
    echo "OPTIONS (optional)"
+   echo " --ttl=		default=1, Time-To-Live of forwarded/proxied packets"
    echo " --debug=              1=only errors, 2=errors+warnings, 3=errors+warnings+info, 4=errors+warnings+info+debug"
    echo " --debug_packet=       1=basic tcpdump output, 2=verbose tcpdump output, 3=tcpdump verbose + packet payload in ASCI (handy for MDNS/SSDP!)"
    echo " --watchdog=           After this many seconds of inactivity, the process will restart internally (default=3)"
@@ -70,6 +71,9 @@ while [ $# -gt 0 ]; do
         --to_address)
           TO_ADDRESS="$value"
           ;;
+	--ttl)
+ 	  TTL=="$value"
+    	  ;;
         --debug)
           DEBUG="$value"
           ;;
@@ -188,6 +192,11 @@ if [ -n "$WATCHDOG" ]; then
 fi
 echo "WATCHDOG timeout set to $SOCAT_TIMEOUT seconds."
 
+# SET TTL (DEFAULT=1)
+if [ -z "$TTL" ]; then
+  TTL=1
+fi
+
 # FUNCTION TO START THE SENDER. LISTEN TO MULTICASTS AND FORWARD THEM TO ANOTHER IP ADDRESS (WHICH RECEIVES THEM AND SENDS THEM OUT AS MULTICASTS).
 start_sender() {
   echo "Starting the sender..."
@@ -204,7 +213,7 @@ start_sender() {
 start_receiver() {
   echo "Starting the receiver..."
   while true; do
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT,ttl=$TTL
      echo ""
      echo "Receiver process stopped, restarting..."
      echo ""
