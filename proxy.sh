@@ -213,7 +213,7 @@ start_sender() {
 start_receiver() {
   echo "Starting the receiver..."
   while true; do
-     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT,ttl=$TTL
+     socat $SOCAT_DEBUG_LEVEL -u -T $SOCAT_TIMEOUT UDP4-RECVFROM:$VIA_PORT,bind=$FROM_IP,reuseaddr,reuseport,fork,ip-multicast-loop=0 UDP4-SENDTO:$MULTICAST_ADDRESS:$MULTICAST_PORT,ttl=$TTL,ip-multicast-ttl=$TTL
      echo ""
      echo "Receiver process stopped, restarting..."
      echo ""
