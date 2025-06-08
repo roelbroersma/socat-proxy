@@ -1,4 +1,4 @@
-# USE ALPINE BASE IMAGE, THIS HAS SOCAT 1.8.0.0 NOWADAYS :)
+# USE ALPINE BASE IMAGE, THIS HAS SOCAT >1.8.0.0 NOWADAYS :)
 FROM alpine:latest
 
 LABEL maintainer="roel@gigaweb.nl" \
