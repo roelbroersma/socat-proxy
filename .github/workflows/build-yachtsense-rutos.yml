@@ -5,7 +5,10 @@ on:
     branches:
       - yachtsense-rutos-vuci
     paths:
-      - 'rutos-yachtsense/**'
+      - 'rutos-yachtsense/build.sh'
+      - 'rutos-yachtsense/source.part*.b64'
+      - 'rutos-yachtsense/source.tar.gz'
+      - 'rutos-yachtsense/trigger-build-*.txt'
       - '.github/workflows/build-yachtsense-rutos.yml'
   workflow_dispatch:
 
@@ -50,7 +53,7 @@ jobs:
 
           # Teltonika's helper always requests an interactive TTY. GitHub Actions
           # has no TTY, so retain stdin but remove the -t flag.
-          sed -i -E 's/(docker[^\n]* run[^\n]*) -it([[:space:]\\])?/\\1 -i\\2/g; s/run -it/run -i/g; s/-it --rm/-i --rm/g; s/--rm -it/--rm -i/g' "$SDK/scripts/dockerbuild"
+          sed -i -E 's/run -it/run -i/g; s/-it --rm/-i --rm/g; s/--rm -it/--rm -i/g' "$SDK/scripts/dockerbuild"
           grep -n 'DOCKER_CMD run' "$SDK/scripts/dockerbuild" | tee -a "$DIST/sdk-docker-patches.txt"
           '''.strip('\n')
           if 'Patching SDK container for CI and current RubyGems' not in text:
