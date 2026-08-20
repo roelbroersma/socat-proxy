@@ -1,0 +1,158 @@
+===== com/raymarine/rayconnect/modules/mfd/rayview/RayControlActivity.java =====
+1:package com.raymarine.rayconnect.modules.mfd.rayview;
+2-
+3:import android.content.Context;
+4:import android.os.Bundle;
+5:import android.view.View;
+6:import androidx.activity.result.ActivityResultCaller;
+7:import androidx.appcompat.app.AppCompatActivity;
+8:import com.raymarine.rayconnect.R;
+9:import com.raymarine.rayconnect.RouterProvider;
+10:import com.raymarine.rayconnect.arch.BackButtonListener;
+11:import com.raymarine.rayconnect.device.mfd.control.RaymarineControlDriver;
+12:import com.raymarine.rayconnect.modules.mfd.rayview.RayViewFragment;
+13:import com.raymarine.rayconnect.rayview.gstreamer.GStreamerManager;
+14:import java.io.Serializable;
+15:import java.util.LinkedHashMap;
+16:import java.util.Map;
+17:import java.util.Objects;
+18:import kotlin.Metadata;
+19:import kotlin.Unit;
+20:import kotlin.jvm.functions.Function0;
+21:import kotlin.jvm.functions.Function1;
+22:import kotlin.jvm.functions.Function2;
+23:import kotlin.jvm.internal.Intrinsics;
+24:import kotlin.jvm.internal.Reflection;
+25:import org.koin.core.context.GlobalContextKt;
+26:import org.koin.core.definition.BeanDefinition;
+27:import org.koin.core.definition.DefinitionFactory;
+28:import org.koin.core.definition.Kind;
+29:import org.koin.core.definition.Options;
+30:import org.koin.core.module.Module;
+31:import org.koin.core.parameter.DefinitionParameters;
+32:import org.koin.core.qualifier.Qualifier;
+33:import org.koin.core.scope.Scope;
+34:import org.koin.dsl.ModuleKt;
+35:import ru.terrakok.cicerone.BaseRouter;
+36:import ru.terrakok.cicerone.Cicerone;
+37:import ru.terrakok.cicerone.Navigator;
+38:import ru.terrakok.cicerone.Router;
+39:import ru.terrakok.cicerone.android.support.SupportAppNavigator;
+40-
+41:/* compiled from: RayControlActivity.kt */
+42:@Metadata(d1 = {"\u0000:\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\b\u0005\u0018\u00002\u00020\u00012\u00020\u0002B\u0005¢\u0006\u0002\u0010\u0003J\b\u0010\f\u001a\u00020\u000bH\u0002J\b\u0010\r\u001a\u00020\u000eH\u0016J\u0012\u0010\u000f\u001a\u00020\u000e2\b\u0010\u0010\u001a\u0004\u0018\u00010\u0011H\u0014J\b\u0010\u0012\u001a\u00020\u000eH\u0014J\b\u0010\u0013\u001a\u00020\u000eH\u0014J\b\u0010\u0014\u001a\u00020\u000eH\u0014J\b\u0010\u0015\u001a\u00020\bH\u0016R\u000e\u0010\u0004\u001a\u00020\u0005X\u0082\u0004¢\u0006\u0002\n\u0000R\u001c\u0010\u0006\u001a\u0010\u0012\f\u0012\n \t*\u0004\u0018\u00010\b0\b0\u0007X\u0082\u0004¢\u0006\u0002\n\u0000R\u0010\u0010\n\u001a\u0004\u0018\u00010\u000bX\u0082\u000e¢\u0006\u0002\n\u0000¨\u0006\u0016"}, d2 = {"Lcom/raymarine/rayconnect/modules/mfd/rayview/RayControlActivity;", "Landroidx/appcompat/app/AppCompatActivity;", "Lcom/raymarine/rayconnect/RouterProvider;", "()V", "gstreamerModule", "Lorg/koin/core/module/Module;", "localCicerone", "Lru/terrakok/cicerone/Cicerone;", "Lru/terrakok/cicerone/Router;", "kotlin.jvm.PlatformType", "navigator", "Lru/terrakok/cicerone/Navigator;", "getNavigator", "onBackPressed", "", "onCreate", "savedInstanceState", "Landroid/os/Bundle;", "onDestroy", "onPause", "onResume", "provideRouter", "app_release"}, k = 1, mv = {1, 6, 0}, xi = 48)
+43-/* loaded from: classes3.dex */
+44:public final class RayControlActivity extends AppCompatActivity implements RouterProvider {
+45-    public Map<Integer, View> _$_findViewCache;
+46:    private final Module gstreamerModule;
+47-    private final Cicerone<Router> localCicerone;
+48-    private Navigator navigator;
+49-
+50-    public void _$_clearFindViewByIdCache() {
+51-        this._$_findViewCache.clear();
+52-    }
+53-
+54-    public View _$_findCachedViewById(int i) {
+55-        Map<Integer, View> map = this._$_findViewCache;
+56-        View view = map.get(Integer.valueOf(i));
+57-        if (view != null) {
+58-            return view;
+59-        }
+60-        View viewFindViewById = findViewById(i);
+61-        if (viewFindViewById == null) {
+62-            return null;
+63-        }
+64-        map.put(Integer.valueOf(i), viewFindViewById);
+65-        return viewFindViewById;
+66-    }
+67-
+68:    public RayControlActivity() {
+69-        Cicerone<Router> ciceroneCreate = Cicerone.create();
+70-        Intrinsics.checkNotNullExpressionValue(ciceroneCreate, "create()");
+71-        this.localCicerone = ciceroneCreate;
+72:        this.gstreamerModule = ModuleKt.module$default(false, true, new Function1<Module, Unit>() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.RayControlActivity$gstreamerModule$1
+73-            @Override // kotlin.jvm.functions.Function1
+74-            public /* bridge */ /* synthetic */ Unit invoke(Module module) {
+75-                invoke2(module);
+76-                return Unit.INSTANCE;
+77-            }
+78-
+79-            /* renamed from: invoke, reason: avoid collision after fix types in other method */
+80-            public final void invoke2(Module module) {
+81-                Intrinsics.checkNotNullParameter(module, "$this$module");
+82:                AnonymousClass1 anonymousClass1 = new Function2<Scope, DefinitionParameters, GStreamerManager>() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.RayControlActivity$gstreamerModule$1.1
+83-                    @Override // kotlin.jvm.functions.Function2
+84:                    public final GStreamerManager invoke(Scope single, DefinitionParameters it) {
+85-                        Intrinsics.checkNotNullParameter(single, "$this$single");
+86-                        Intrinsics.checkNotNullParameter(it, "it");
+87:                        return new GStreamerManager((Context) single.get(Reflection.getOrCreateKotlinClass(Context.class), (Qualifier) null, (Function0<DefinitionParameters>) null));
+88-                    }
+89-                };
+90-                Qualifier qualifier = (Qualifier) null;
+91-                DefinitionFactory definitionFactory = DefinitionFactory.INSTANCE;
+92-                Kind kind = Kind.Single;
+93:                BeanDefinition beanDefinition = new BeanDefinition(qualifier, qualifier, Reflection.getOrCreateKotlinClass(GStreamerManager.class));
+94-                beanDefinition.setDefinition(anonymousClass1);
+95-                beanDefinition.setKind(kind);
+96-                module.declareDefinition(beanDefinition, new Options(false, false));
+97-            }
+98-        }, 1, null);
+99:        this._$_findViewCache = new LinkedHashMap();
+100-    }
+101-
+102-    @Override // androidx.appcompat.app.AppCompatActivity, androidx.fragment.app.FragmentActivity, androidx.activity.ComponentActivity, androidx.core.app.ComponentActivity, android.app.Activity
+103-    protected void onCreate(Bundle savedInstanceState) {
+104-        super.onCreate(savedInstanceState);
+105-        getWindow().addFlags(1152);
+106:        setContentView(R.layout.activity_ray_control);
+107:        RayViewFragment.Companion companion = RayViewFragment.INSTANCE;
+108:        Serializable serializableExtra = getIntent().getSerializableExtra(RayViewFragment.PARAM_DEVICE);
+109:        Objects.requireNonNull(serializableExtra, "null cannot be cast to non-null type com.raymarine.rayconnect.device.mfd.control.RaymarineControlDriver.RtspDevice");
+110:        getSupportFragmentManager().beginTransaction().add(R.id.rayControlFragmentContainer, companion.newInstance((RaymarineControlDriver.RtspDevice) serializableExtra)).commitNow();
+111:        GlobalContextKt.loadKoinModules(this.gstreamerModule);
+112-    }
+113-
+114-    @Override // androidx.fragment.app.FragmentActivity, android.app.Activity
+115-    protected void onResume() {
+116-        super.onResume();
+117-        this.localCicerone.getNavigatorHolder().setNavigator(getNavigator());
+118-    }
+119-
+120-    @Override // androidx.fragment.app.FragmentActivity, android.app.Activity
+121-    protected void onPause() {
+122-        this.localCicerone.getNavigatorHolder().removeNavigator();
+123-        super.onPause();
+124-    }
+125-
+126-    @Override // androidx.appcompat.app.AppCompatActivity, androidx.fragment.app.FragmentActivity, android.app.Activity
+127-    protected void onDestroy() {
+128:        GlobalContextKt.unloadKoinModules(this.gstreamerModule);
+129-        super.onDestroy();
+130-    }
+131-
+132-    private final Navigator getNavigator() {
+133-        if (this.navigator == null) {
+134:            this.navigator = new SupportAppNavigator(this, getSupportFragmentManager(), R.id.rayControlFragmentContainer);
+135-        }
+136-        Navigator navigator = this.navigator;
+137-        Intrinsics.checkNotNull(navigator);
+138-        return navigator;
+139-    }
+140-
+141:    @Override // com.raymarine.rayconnect.RouterProvider
+142-    /* renamed from: provideRouter */
+143-    public Router getRouter() {
+144-        BaseRouter router = this.localCicerone.getRouter();
+145-        Intrinsics.checkNotNullExpressionValue(router, "localCicerone.router");
+146-        return (Router) router;
+147-    }
+148-
+149-    @Override // androidx.activity.ComponentActivity, android.app.Activity
+150-    public void onBackPressed() {
+151:        ActivityResultCaller activityResultCallerFindFragmentById = getSupportFragmentManager().findFragmentById(R.id.rayControlFragmentContainer);
+152-        if (activityResultCallerFindFragmentById == null || !(activityResultCallerFindFragmentById instanceof BackButtonListener)) {
+153-            return;
+154-        }
+155-        ((BackButtonListener) activityResultCallerFindFragmentById).onBackPressed();
+156-    }
+157-}

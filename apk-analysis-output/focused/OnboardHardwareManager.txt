@@ -1,0 +1,226 @@
+===== com/raymarine/rayconnect/domain/hardware/router/OnboardHardwareManager.java =====
+1:package com.raymarine.rayconnect.domain.hardware.router;
+2-
+3:import com.google.gson.Gson;
+4:import com.raymarine.rayconnect.KotlinExtensionsKt;
+5:import com.raymarine.rayconnect.domain.FlirResource;
+6:import com.raymarine.rayconnect.domain.boat.BoatSettingsManager;
+7:import com.raymarine.rayconnect.domain.flircloud.Device;
+8:import com.raymarine.rayconnect.domain.flircloud.DeviceGroup;
+9:import com.raymarine.rayconnect.domain.flircloud.FlirCloudDeviceRepository;
+10:import com.raymarine.rayconnect.domain.flircloud.FlirCloudGroupRepository;
+11:import com.raymarine.rayconnect.domain.hardware.NetworkDevice;
+12:import com.raymarine.rayconnect.domain.hardware.cloudconnector.OnboardDriver;
+13:import com.raymarine.rayconnect.domain.hardware.router.RouterOnboardResult;
+14:import com.raymarine.rayconnect.domain.hardware.router.SecondaryOnboardResult;
+15:import com.raymarine.rayconnect.domain.logging.Logger;
+16:import com.raymarine.rayconnect.modules.app.sidemenu.SideMenuFragment;
+17:import cz.msebera.android.httpclient.HttpStatus;
+18:import cz.msebera.android.httpclient.cookie.ClientCookie;
+19:import java.security.NoSuchAlgorithmException;
+20:import java.util.Collection;
+21:import java.util.Iterator;
+22:import java.util.List;
+23:import java.util.Map;
+24:import kotlin.Metadata;
+25:import kotlin.NoWhenBranchMatchedException;
+26:import kotlin.Pair;
+27:import kotlin.ResultKt;
+28:import kotlin.collections.CollectionsKt;
+29:import kotlin.collections.MapsKt;
+30:import kotlin.coroutines.Continuation;
+31:import kotlin.coroutines.intrinsics.IntrinsicsKt;
+32:import kotlin.coroutines.jvm.internal.Boxing;
+33:import kotlin.coroutines.jvm.internal.ContinuationImpl;
+34:import kotlin.coroutines.jvm.internal.DebugMetadata;
+35:import kotlin.jvm.functions.Function2;
+36:import kotlin.jvm.internal.Intrinsics;
+37-
+38-/* compiled from: OnboardHardwareManager.kt */
+39:@Metadata(d1 = {"\u0000z\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010 \n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u000b\n\u0000\n\u0002\u0010\u000e\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0006\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0006\u0018\u00002\u00020\u0001B5\u0012\u0006\u0010\u0002\u001a\u00020\u0003\u0012\u0006\u0010\u0004\u001a\u00020\u0005\u0012\u0006\u0010\u0006\u001a\u00020\u0007\u0012\u0006\u0010\b\u001a\u00020\t\u0012\u0006\u0010\n\u001a\u00020\u000b\u0012\u0006\u0010\f\u001a\u00020\r¢\u0006\u0002\u0010\u000eJ!\u0010\u001b\u001a\u00020\u001c2\u0006\u0010\u001d\u001a\u00020\u001e2\u0006\u0010\u001f\u001a\u00020 H\u0082@ø\u0001\u0000¢\u0006\u0002\u0010!J\u0019\u0010\"\u001a\u00020\u00172\u0006\u0010\u001f\u001a\u00020 H\u0086@ø\u0001\u0000¢\u0006\u0002\u0010#J!\u0010$\u001a\u00020\u001a2\u0006\u0010%\u001a\u00020\u001e2\u0006\u0010\u001f\u001a\u00020 H\u0086@ø\u0001\u0000¢\u0006\u0002\u0010!J\u0019\u0010&\u001a\u00020'2\u0006\u0010(\u001a\u00020)H\u0086@ø\u0001\u0000¢\u0006\u0002\u0010*J\u0019\u0010+\u001a\u00020\u00172\u0006\u0010\u0015\u001a\u00020\u0012H\u0086@ø\u0001\u0000¢\u0006\u0002\u0010,J\u0019\u0010-\u001a\u00020\u001a2\u0006\u0010\u0015\u001a\u00020\u0019H\u0086@ø\u0001\u0000¢\u0006\u0002\u0010.R\u000e\u0010\b\u001a\u00020\tX\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\n\u001a\u00020\u000bX\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0007X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u0004\u001a\u00020\u0005X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u0002\u001a\u00020\u0003X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\f\u001a\u00020\rX\u0082\u0004¢\u0006\u0002\n\u0000RB\u0010\u000f\u001a3\u0012/\u0012-\b\u0001\u0012\u0013\u0012\u00110\u0012¢\u0006\f\b\u0013\u0012\b\b\u0014\u0012\u0004\b\b(\u0015\u0012\n\u0012\b\u0012\u0004\u0012\u00020\u00170\u0016\u0012\u0006\u0012\u0004\u0018\u00010\u00010\u00110\u0010X\u0082\u0004ø\u0001\u0000¢\u0006\u0002\n\u0000RB\u0010\u0018\u001a3\u0012/\u0012-\b\u0001\u0012\u0013\u0012\u00110\u0019¢\u0006\f\b\u0013\u0012\b\b\u0014\u0012\u0004\b\b(\u0015\u0012\n\u0012\b\u0012\u0004\u0012\u00020\u001a0\u0016\u0012\u0006\u0012\u0004\u0018\u00010\u00010\u00110\u0010X\u0082\u0004ø\u0001\u0000¢\u0006\u0002\n\u0000\u0082\u0002\u0004\n\u0002\b\u0019¨\u0006/"}, d2 = {"Lcom/raymarine/rayconnect/domain/hardware/router/OnboardHardwareManager;", "", "gson", "Lcom/google/gson/Gson;", "flirCloudGroupRepository", "Lcom/raymarine/rayconnect/domain/flircloud/FlirCloudGroupRepository;", "flirCloudDeviceRepository", "Lcom/raymarine/rayconnect/domain/flircloud/FlirCloudDeviceRepository;", "boatSettingsManager", "Lcom/raymarine/rayconnect/domain/boat/BoatSettingsManager;", "cloudConnectorDriver", "Lcom/raymarine/rayconnect/domain/hardware/cloudconnector/OnboardDriver;", "logger", "Lcom/raymarine/rayconnect/domain/logging/Logger;", "(Lcom/google/gson/Gson;Lcom/raymarine/rayconnect/domain/flircloud/FlirCloudGroupRepository;Lcom/raymarine/rayconnect/domain/flircloud/FlirCloudDeviceRepository;Lcom/raymarine/rayconnect/domain/boat/BoatSettingsManager;Lcom/raymarine/rayconnect/domain/hardware/cloudconnector/OnboardDriver;Lcom/raymarine/rayconnect/domain/logging/Logger;)V", "routerOnboardFlow", "", "Lkotlin/Function2;", "Lcom/raymarine/rayconnect/domain/hardware/router/OnboardProgress;", "Lkotlin/ParameterName;", "name", "onboardProgress", "Lkotlin/coroutines/Continuation;", "Lcom/raymarine/rayconnect/domain/hardware/router/RouterOnboardResult;", "secondaryOnboardFlow", "Lcom/raymarine/rayconnect/domain/hardware/router/SecondaryOnboardProgress;", "Lcom/raymarine/rayconnect/domain/hardware/router/SecondaryOnboardResult;", "cleanupForOnboarding", "", "serial", "", SideMenuFragment.PARAM_DELETE_GROUP, "Lcom/raymarine/rayconnect/domain/flircloud/DeviceGroup;", "(Ljava/lang/String;Lcom/raymarine/rayconnect/domain/flircloud/DeviceGroup;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "finalizeRouterOnboarding", "(Lcom/raymarine/rayconnect/domain/flircloud/DeviceGroup;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "finalizeSecondaryOnboarding", "deviceSerial", "getHardwareStatus", "Lcom/raymarine/rayconnect/domain/hardware/router/DeviceStatus;", "routerDevice", "Lcom/raymarine/rayconnect/domain/hardware/NetworkDevice;", "(Lcom/raymarine/rayconnect/domain/hardware/NetworkDevice;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "onboardRouter", "(Lcom/raymarine/rayconnect/domain/hardware/router/OnboardProgress;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "onboardSecondary", "(Lcom/raymarine/rayconnect/domain/hardware/router/SecondaryOnboardProgress;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", ClientCookie.DOMAIN_ATTR}, k = 1, mv = {1, 6, 0}, xi = 48)
+40-/* loaded from: classes3.dex */
+41-public final class OnboardHardwareManager {
+42-    private final BoatSettingsManager boatSettingsManager;
+43:    private final OnboardDriver cloudConnectorDriver;
+44-    private final FlirCloudDeviceRepository flirCloudDeviceRepository;
+45-    private final FlirCloudGroupRepository flirCloudGroupRepository;
+46-    private final Gson gson;
+47-    private final Logger logger;
+48-    private final List<Function2<OnboardProgress, Continuation<? super RouterOnboardResult>, Object>> routerOnboardFlow;
+49-    private final List<Function2<SecondaryOnboardProgress, Continuation<? super SecondaryOnboardResult>, Object>> secondaryOnboardFlow;
+50-
+51-    /* compiled from: OnboardHardwareManager.kt */
+52-    @Metadata(k = 3, mv = {1, 6, 0}, xi = 48)
+53:    @DebugMetadata(c = "com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareManager", f = "OnboardHardwareManager.kt", i = {0, 0, 1, 1}, l = {489, 493, 495}, m = "cleanupForOnboarding", n = {"this", SideMenuFragment.PARAM_DELETE_GROUP, "this", "device"}, s = {"L$0", "L$1", "L$0", "L$1"})
+54:    /* renamed from: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareManager$cleanupForOnboarding$1, reason: invalid class name */
+55-    static final class AnonymousClass1 extends ContinuationImpl {
+56-        Object L$0;
+57-        Object L$1;
+58-        int label;
+59-        /* synthetic */ Object result;
+60-
+61-        AnonymousClass1(Continuation<? super AnonymousClass1> continuation) {
+62-            super(continuation);
+63-        }
+64-
+65-        @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+66-        public final Object invokeSuspend(Object obj) {
+67-            this.result = obj;
+68-            this.label |= Integer.MIN_VALUE;
+69-            return OnboardHardwareManager.this.cleanupForOnboarding(null, null, this);
+70-        }
+71-    }
+72-
+73-    /* compiled from: OnboardHardwareManager.kt */
+74-    @Metadata(k = 3, mv = {1, 6, 0}, xi = 48)
+75:    @DebugMetadata(c = "com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareManager", f = "OnboardHardwareManager.kt", i = {0, 0}, l = {369}, m = "onboardRouter", n = {"this", "onboardProgress"}, s = {"L$0", "L$1"})
+76:    /* renamed from: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareManager$onboardRouter$1, reason: invalid class name and case insensitive filesystem */
+77-    static final class C05311 extends ContinuationImpl {
+78-        int I$0;
+79-        int I$1;
+80-        Object L$0;
+81-        Object L$1;
+82-        int label;
+83-        /* synthetic */ Object result;
+84-
+85-        C05311(Continuation<? super C05311> continuation) {
+86-            super(continuation);
+87-        }
+88-
+89-        @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+90-        public final Object invokeSuspend(Object obj) {
+91-            this.result = obj;
+92-            this.label |= Integer.MIN_VALUE;
+93-            return OnboardHardwareManager.this.onboardRouter(null, this);
+94-        }
+95-    }
+96-
+97-    /* compiled from: OnboardHardwareManager.kt */
+98-    @Metadata(k = 3, mv = {1, 6, 0}, xi = 48)
+99:    @DebugMetadata(c = "com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareManager", f = "OnboardHardwareManager.kt", i = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5}, l = {396, HttpStatus.SC_PRECONDITION_FAILED, 420, 432, 454, 464}, m = "onboardSecondary", n = {"this", "onboardProgress", "this", "onboardProgress", "this", "onboardProgress", "this", "onboardProgress", "this", "onboardProgress", "this", "onboardProgress"}, s = {"L$0", "L$1", "L$0", "L$1", "L$0", "L$1", "L$0", "L$1", "L$0", "L$1", "L$0", "L$1"})
+100:    /* renamed from: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareManager$onboardSecondary$1, reason: invalid class name and case insensitive filesystem */
+101-    static final class C05321 extends ContinuationImpl {
+102-        Object L$0;
+103-        Object L$1;
+104-        int label;
+105-        /* synthetic */ Object result;
+106-
+107-        C05321(Continuation<? super C05321> continuation) {
+108-            super(continuation);
+109-        }
+110-
+111-        @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+112-        public final Object invokeSuspend(Object obj) {
+113-            this.result = obj;
+114-            this.label |= Integer.MIN_VALUE;
+115-            return OnboardHardwareManager.this.onboardSecondary(null, this);
+116-        }
+117-    }
+118-
+119:    public OnboardHardwareManager(Gson gson, FlirCloudGroupRepository flirCloudGroupRepository, FlirCloudDeviceRepository flirCloudDeviceRepository, BoatSettingsManager boatSettingsManager, OnboardDriver cloudConnectorDriver, Logger logger) {
+120-        Intrinsics.checkNotNullParameter(gson, "gson");
+121-        Intrinsics.checkNotNullParameter(flirCloudGroupRepository, "flirCloudGroupRepository");
+122-        Intrinsics.checkNotNullParameter(flirCloudDeviceRepository, "flirCloudDeviceRepository");
+123-        Intrinsics.checkNotNullParameter(boatSettingsManager, "boatSettingsManager");
+124:        Intrinsics.checkNotNullParameter(cloudConnectorDriver, "cloudConnectorDriver");
+125-        Intrinsics.checkNotNullParameter(logger, "logger");
+126-        this.gson = gson;
+127-        this.flirCloudGroupRepository = flirCloudGroupRepository;
+128-        this.flirCloudDeviceRepository = flirCloudDeviceRepository;
+129-        this.boatSettingsManager = boatSettingsManager;
+130:        this.cloudConnectorDriver = cloudConnectorDriver;
+131-        this.logger = logger;
+132-        this.routerOnboardFlow = CollectionsKt.listOf((Object[]) new Function2[]{new OnboardHardwareManager$routerOnboardFlow$1(this, null), new OnboardHardwareManager$routerOnboardFlow$2(this, null), new OnboardHardwareManager$routerOnboardFlow$3(this, null), new OnboardHardwareManager$routerOnboardFlow$4(this, null), new OnboardHardwareManager$routerOnboardFlow$5(this, null), new OnboardHardwareManager$routerOnboardFlow$6(this, null)});
+133-        this.secondaryOnboardFlow = CollectionsKt.listOf((Object[]) new Function2[]{new OnboardHardwareManager$secondaryOnboardFlow$1(this, null), new OnboardHardwareManager$secondaryOnboardFlow$2(this, null), new OnboardHardwareManager$secondaryOnboardFlow$3(this, null), new OnboardHardwareManager$secondaryOnboardFlow$4(this, null), new OnboardHardwareManager$secondaryOnboardFlow$5(this, null)});
+134-    }
+135-
+136:    public final Object getHardwareStatus(NetworkDevice networkDevice, Continuation<? super DeviceStatus> continuation) {
+137:        return this.cloudConnectorDriver.status(networkDevice, continuation);
+138-    }
+139-
+140-    /* JADX WARN: Removed duplicated region for block: B:16:0x0058  */
+141-    /* JADX WARN: Removed duplicated region for block: B:22:0x0098 A[RETURN] */
+142-    /* JADX WARN: Removed duplicated region for block: B:23:0x0099  */
+143-    /* JADX WARN: Removed duplicated region for block: B:24:0x009b  */
+144-    /* JADX WARN: Removed duplicated region for block: B:7:0x0014  */
+145:    /* JADX WARN: Unsupported multi-entry loop pattern (BACK_EDGE: B:19:0x008e -> B:20:0x0092). Please report as a decompilation issue!!! */
+146-    /*
+147-        Code decompiled incorrectly, please refer to instructions dump.
+148-    */
+149-    public final Object onboardRouter(OnboardProgress onboardProgress, Continuation<? super RouterOnboardResult> continuation) {
+150-        C05311 c05311;
+151-        OnboardHardwareManager onboardHardwareManager;
+152-        OnboardProgress onboardProgress2;
+153-        int size;
+154-        Object obj;
+155-        C05311 c053112;
+156-        int i;
+157-        if (continuation instanceof C05311) {
+--
+269-                c05321.label -= Integer.MIN_VALUE;
+270-            } else {
+271-                c05321 = new C05321(continuation);
+272-            }
+273-        }
+274-        Object objListDevices = c05321.result;
+275-        Object coroutine_suspended = IntrinsicsKt.getCOROUTINE_SUSPENDED();
+276-        Object obj = null;
+277-        switch (c05321.label) {
+278-            case 0:
+279-                ResultKt.throwOnFailure(objListDevices);
+280-                BoatSettingsManager boatSettingsManager = this.boatSettingsManager;
+281:                BoatSettingsManager.SharedSetting.YachtSenseLinkAdminPassword yachtSenseLinkAdminPassword = BoatSettingsManager.SharedSetting.YachtSenseLinkAdminPassword.INSTANCE;
+282-                DeviceGroup deviceGroup = secondaryOnboardProgress.getDeviceGroup();
+283-                c05321.L$0 = this;
+284-                secondaryOnboardProgress2 = secondaryOnboardProgress;
+285-                c05321.L$1 = secondaryOnboardProgress2;
+286-                c05321.label = 1;
+287:                setting$default = BoatSettingsManager.getSetting$default(boatSettingsManager, yachtSenseLinkAdminPassword, deviceGroup, false, c05321, 4, null);
+288-                if (setting$default == coroutine_suspended) {
+289-                    return coroutine_suspended;
+290-                }
+291-                onboardHardwareManager = this;
+292-                flirResource = (FlirResource) setting$default;
+293-                if (!(flirResource instanceof FlirResource.Failed)) {
+294-                    new SecondaryOnboardResult.UnknownError(((FlirResource.Failed) flirResource).getMessage());
+295-                } else if (flirResource instanceof FlirResource.Success) {
+296-                    FlirResource.Success success = (FlirResource.Success) flirResource;
+297-                    if (success.getData() == null) {
+298-                        return new SecondaryOnboardResult.Error(SecondaryOnboardResult.ErrorsEnum.NoOnboardData);
+299-                    }
+--
+310-                    return coroutine_suspended;
+311-                }
+312-                secondaryOnboardProgress3 = secondaryOnboardProgress2;
+313-                objListDevices = objAddPendingDevice;
+314-                OnboardHardwareManager onboardHardwareManager4 = onboardHardwareManager;
+315-                flirResource2 = (FlirResource) objListDevices;
+316-                if (!(flirResource2 instanceof FlirResource.Failed)) {
+317-                    return new SecondaryOnboardResult.UnknownError(((FlirResource.Failed) flirResource2).getMessage());
+318-                }
+319-                if (flirResource2 instanceof FlirResource.Success) {
+320-                    secondaryOnboardProgress3.setCloudDeviceSecret((String) ((FlirResource.Success) flirResource2).getData());
+321-                }
+322:                OnboardDriver onboardDriver = onboardHardwareManager4.cloudConnectorDriver;
+323:                String deviceIpAddress = secondaryOnboardProgress3.getDeviceIpAddress();
+324:                int devicePort = secondaryOnboardProgress3.getDevicePort();
+325:                String routerIpAddress = secondaryOnboardProgress3.getRouterIpAddress();
+326:                int routerPort = secondaryOnboardProgress3.getRouterPort();
+327-                String routerPassword = secondaryOnboardProgress3.getRouterPassword();
+328-                String cloudDeviceSecret = secondaryOnboardProgress3.getCloudDeviceSecret();
+329-                c05321.L$0 = onboardHardwareManager4;
+330-                c05321.L$1 = secondaryOnboardProgress3;
+331-                c05321.label = 3;
+332:                Object objOnboardSecondary = onboardDriver.onboardSecondary(deviceIpAddress, devicePort, routerIpAddress, routerPort, routerPassword, cloudDeviceSecret, c05321);
+333-                if (objOnboardSecondary == coroutine_suspended) {
+334-                    return coroutine_suspended;
+335-                }
+336-                onboardHardwareManager2 = onboardHardwareManager4;
+337-                objListDevices = objOnboardSecondary;
+338-                secondaryOnboardProgress4 = secondaryOnboardProgress3;
+339-                onboardResult = (OnboardDriver.OnboardResult) objListDevices;
+340-                if (!(onboardResult instanceof OnboardDriver.OnboardResult.Error)) {
+341-                    return new SecondaryOnboardResult.UnknownError(((OnboardDriver.OnboardResult.Error) onboardResult).getMessage());
+342-                }
+343-                if (onboardResult instanceof OnboardDriver.OnboardResult.Success) {
+344-                    SecondaryOnboardResult.Success success2 = SecondaryOnboardResult.Success.INSTANCE;

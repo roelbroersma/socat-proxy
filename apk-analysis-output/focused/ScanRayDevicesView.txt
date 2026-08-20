@@ -1,0 +1,147 @@
+===== com/raymarine/rayconnect/modules/mfd/rayview/ScanRayDevicesView.java =====
+1:package com.raymarine.rayconnect.modules.mfd.rayview;
+2-
+3:import android.content.Context;
+4:import android.content.DialogInterface;
+5:import android.util.AttributeSet;
+6:import android.view.LayoutInflater;
+7:import android.view.View;
+8:import android.view.ViewGroup;
+9:import android.widget.LinearLayout;
+10:import android.widget.TextView;
+11:import androidx.appcompat.app.AlertDialog;
+12:import com.microsoft.identity.common.java.providers.microsoft.MicrosoftAuthorizationResponse;
+13:import com.raymarine.rayconnect.R;
+14:import com.raymarine.rayconnect.device.mfd.control.RaymarineControlDriver;
+15:import com.raymarine.rayconnect.widgets.MaskedImageView;
+16:import java.util.LinkedHashMap;
+17:import java.util.Map;
+18:import kotlin.Metadata;
+19:import kotlin.Unit;
+20:import kotlin.jvm.functions.Function0;
+21:import kotlin.jvm.functions.Function1;
+22:import kotlin.jvm.internal.DefaultConstructorMarker;
+23:import kotlin.jvm.internal.Intrinsics;
+24-
+25-/* compiled from: ScanRayDevicesView.kt */
+26:@Metadata(d1 = {"\u0000:\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0000\u0018\u00002\u00020\u0001B\u0019\u0012\u0006\u0010\u0002\u001a\u00020\u0003\u0012\n\b\u0002\u0010\u0004\u001a\u0004\u0018\u00010\u0005¢\u0006\u0002\u0010\u0006J\"\u0010\u0007\u001a\u00020\b2\u0006\u0010\t\u001a\u00020\n2\u0012\u0010\u000b\u001a\u000e\u0012\u0004\u0012\u00020\n\u0012\u0004\u0012\u00020\b0\fJ\u0006\u0010\r\u001a\u00020\bJ\u000e\u0010\u000e\u001a\u00020\b2\u0006\u0010\u000f\u001a\u00020\u0010J\u0006\u0010\u0011\u001a\u00020\bJ\u0014\u0010\u0012\u001a\u00020\b2\f\u0010\u0013\u001a\b\u0012\u0004\u0012\u00020\b0\u0014¨\u0006\u0015"}, d2 = {"Lcom/raymarine/rayconnect/modules/mfd/rayview/ScanRayDevicesView;", "Landroid/widget/LinearLayout;", "context", "Landroid/content/Context;", "attrs", "Landroid/util/AttributeSet;", "(Landroid/content/Context;Landroid/util/AttributeSet;)V", "addDeviceItem", "", "device", "Lcom/raymarine/rayconnect/device/mfd/control/RaymarineControlDriver$RtspDevice;", "selectionCallback", "Lkotlin/Function1;", "completed", "error", MicrosoftAuthorizationResponse.MESSAGE, "", "reset", "setCancellation", "cancellation", "Lkotlin/Function0;", "app_release"}, k = 1, mv = {1, 6, 0}, xi = 48)
+27-/* loaded from: classes3.dex */
+28-public final class ScanRayDevicesView extends LinearLayout {
+29-    public Map<Integer, View> _$_findViewCache;
+30-
+31-    public void _$_clearFindViewByIdCache() {
+32-        this._$_findViewCache.clear();
+33-    }
+34-
+35-    public View _$_findCachedViewById(int i) {
+36-        Map<Integer, View> map = this._$_findViewCache;
+37-        View view = map.get(Integer.valueOf(i));
+38-        if (view != null) {
+--
+42-        if (viewFindViewById == null) {
+43-            return null;
+44-        }
+45-        map.put(Integer.valueOf(i), viewFindViewById);
+46-        return viewFindViewById;
+47-    }
+48-
+49-    /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
+50-    public ScanRayDevicesView(Context context, AttributeSet attributeSet) {
+51-        super(context, attributeSet);
+52-        Intrinsics.checkNotNullParameter(context, "context");
+53-        LayoutInflater.from(context).inflate(R.layout.view_scan_ray_devices, this);
+54:        this._$_findViewCache = new LinkedHashMap();
+55-    }
+56-
+57-    public /* synthetic */ ScanRayDevicesView(Context context, AttributeSet attributeSet, int i, DefaultConstructorMarker defaultConstructorMarker) {
+58-        this(context, (i & 2) != 0 ? null : attributeSet);
+59-    }
+60-
+61-    public final void reset() {
+62-        TextView textView = (TextView) findViewById(R.id.rayScanDevicesStatusTextView);
+63-        textView.setVisibility(0);
+64:        textView.setText(textView.getResources().getString(R.string.ray_control_devices_scanning));
+65-        ((TextView) findViewById(R.id.rayScanDevicesStatusDescriptionTextView)).setVisibility(8);
+66-        ((LinearLayout) findViewById(R.id.rayScanDevicesLinearLayout)).removeAllViews();
+67-    }
+68-
+69:    public final void addDeviceItem(final RaymarineControlDriver.RtspDevice device, final Function1<? super RaymarineControlDriver.RtspDevice, Unit> selectionCallback) {
+70-        Intrinsics.checkNotNullParameter(device, "device");
+71-        Intrinsics.checkNotNullParameter(selectionCallback, "selectionCallback");
+72:        String str = device.getName() + '-' + device.getAddress();
+73-        View viewFindViewWithTag = findViewWithTag(str);
+74-        if (viewFindViewWithTag == null) {
+75-            viewFindViewWithTag = LayoutInflater.from(getContext()).inflate(R.layout.view_scan_device_item, (ViewGroup) null);
+76-            viewFindViewWithTag.setTag(str);
+77-            ((LinearLayout) findViewById(R.id.rayScanDevicesLinearLayout)).addView(viewFindViewWithTag);
+78-        }
+79:        viewFindViewWithTag.setOnClickListener(new View.OnClickListener() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.ScanRayDevicesView$$ExternalSyntheticLambda1
+80-            @Override // android.view.View.OnClickListener
+81-            public final void onClick(View view) {
+82-                ScanRayDevicesView.m834addDeviceItem$lambda2(device, selectionCallback, this, view);
+83-            }
+84-        });
+85-        MaskedImageView maskedImageView = (MaskedImageView) viewFindViewWithTag.findViewById(R.id.scanDeviceItemImageView);
+86:        maskedImageView.setMasked(!device.isConnectable());
+87-        maskedImageView.setImageResource(device.getType().getImageResource());
+88-        ((TextView) viewFindViewWithTag.findViewById(R.id.scanDeviceItemNameTextView)).setText(device.getName());
+89-        ((TextView) viewFindViewWithTag.findViewById(R.id.scanDeviceItemSerialTextView)).setText(device.getSerial());
+90-    }
+91-
+92-    /* JADX INFO: Access modifiers changed from: private */
+93-    /* renamed from: addDeviceItem$lambda-2, reason: not valid java name */
+94:    public static final void m834addDeviceItem$lambda2(RaymarineControlDriver.RtspDevice device, Function1 selectionCallback, ScanRayDevicesView this$0, View view) {
+95-        Intrinsics.checkNotNullParameter(device, "$device");
+96-        Intrinsics.checkNotNullParameter(selectionCallback, "$selectionCallback");
+97-        Intrinsics.checkNotNullParameter(this$0, "this$0");
+98:        if (device.isConnectable()) {
+99-            selectionCallback.invoke(device);
+100-            return;
+101-        }
+102:        AlertDialog alertDialogCreate = new AlertDialog.Builder(this$0.getContext(), R.style.AlertDialogTheme).setNeutralButton(R.string.common_ok, new DialogInterface.OnClickListener() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.ScanRayDevicesView$$ExternalSyntheticLambda0
+103-            @Override // android.content.DialogInterface.OnClickListener
+104-            public final void onClick(DialogInterface dialogInterface, int i) {
+105-                dialogInterface.dismiss();
+106-            }
+107-        }).setView(LayoutInflater.from(this$0.getContext()).inflate(R.layout.view_popup_mobile_access_disabled, (ViewGroup) null)).create();
+108-        Intrinsics.checkNotNullExpressionValue(alertDialogCreate, "Builder(context, R.style…                .create()");
+109-        alertDialogCreate.show();
+110-    }
+111-
+112-    public final void completed() {
+113-        ((TextView) findViewById(R.id.rayScanDevicesStatusDescriptionTextView)).setVisibility(8);
+114-        if (((LinearLayout) findViewById(R.id.rayScanDevicesLinearLayout)).getChildCount() > 0) {
+115-            ((TextView) findViewById(R.id.rayScanDevicesStatusTextView)).setVisibility(8);
+116-            return;
+117-        }
+118-        TextView textView = (TextView) findViewById(R.id.rayScanDevicesStatusTextView);
+119-        textView.setVisibility(0);
+120:        textView.setText(textView.getResources().getString(R.string.ray_control_no_device_found));
+121-    }
+122-
+123-    public final void error(String message) {
+124-        Intrinsics.checkNotNullParameter(message, "message");
+125-        TextView textView = (TextView) findViewById(R.id.rayScanDevicesStatusTextView);
+126-        textView.setVisibility(0);
+127:        textView.setText(textView.getResources().getString(R.string.ray_control_error));
+128-        TextView textView2 = (TextView) findViewById(R.id.rayScanDevicesStatusDescriptionTextView);
+129-        textView2.setVisibility(8);
+130-        textView2.setText(message);
+131-        ((LinearLayout) findViewById(R.id.rayScanDevicesLinearLayout)).removeAllViews();
+132-    }
+133-
+134-    public final void setCancellation(final Function0<Unit> cancellation) {
+135-        Intrinsics.checkNotNullParameter(cancellation, "cancellation");
+136:        findViewById(R.id.rayScanDevicesCancelView).setOnClickListener(new View.OnClickListener() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.ScanRayDevicesView$$ExternalSyntheticLambda2
+137-            @Override // android.view.View.OnClickListener
+138-            public final void onClick(View view) {
+139-                ScanRayDevicesView.m836setCancellation$lambda7(cancellation, view);
+140-            }
+141-        });
+142-    }
+143-
+144-    /* JADX INFO: Access modifiers changed from: private */
+145-    /* renamed from: setCancellation$lambda-7, reason: not valid java name */
+146-    public static final void m836setCancellation$lambda7(Function0 cancellation, View view) {
+147-        Intrinsics.checkNotNullParameter(cancellation, "$cancellation");
+148-        cancellation.invoke();

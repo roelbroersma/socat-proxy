@@ -1,0 +1,269 @@
+===== com/raymarine/rayconnect/domain/hardware/router/OnboardHardwareSearchManager.java =====
+1:package com.raymarine.rayconnect.domain.hardware.router;
+2-
+3:import androidx.exifinterface.media.ExifInterface;
+4:import com.raymarine.rayconnect.KotlinExtensionsKt;
+5:import com.raymarine.rayconnect.domain.hardware.HardwareType;
+6:import com.raymarine.rayconnect.domain.hardware.NetworkDevice;
+7:import com.raymarine.rayconnect.domain.hardware.NetworkHardwareSearchDriver;
+8:import com.raymarine.rayconnect.domain.hardware.router.CloudConnectorSearchEvent;
+9:import com.raymarine.rayconnect.domain.hardware.router.DeviceStatus;
+10:import com.raymarine.rayconnect.domain.logging.Logger;
+11:import cz.msebera.android.httpclient.cookie.ClientCookie;
+12:import kotlin.Metadata;
+13:import kotlin.NoWhenBranchMatchedException;
+14:import kotlin.ResultKt;
+15:import kotlin.Unit;
+16:import kotlin.coroutines.Continuation;
+17:import kotlin.coroutines.intrinsics.IntrinsicsKt;
+18:import kotlin.coroutines.jvm.internal.ContinuationImpl;
+19:import kotlin.coroutines.jvm.internal.DebugMetadata;
+20:import kotlin.coroutines.jvm.internal.SuspendFunction;
+21:import kotlin.jvm.internal.Intrinsics;
+22:import kotlinx.coroutines.flow.Flow;
+23:import kotlinx.coroutines.flow.FlowCollector;
+24-
+25:/* compiled from: OnboardHardwareSearchManager.kt */
+26:@Metadata(d1 = {"\u00002\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010\u0002\n\u0002\b\u0002\u0018\u00002\u00020\u0001B\u001d\u0012\u0006\u0010\u0002\u001a\u00020\u0003\u0012\u0006\u0010\u0004\u001a\u00020\u0005\u0012\u0006\u0010\u0006\u001a\u00020\u0007¢\u0006\u0002\u0010\bJ\f\u0010\t\u001a\b\u0012\u0004\u0012\u00020\u000b0\nJ\f\u0010\f\u001a\b\u0012\u0004\u0012\u00020\u000b0\nJ\u0006\u0010\r\u001a\u00020\u000eJ\u0006\u0010\u000f\u001a\u00020\u000eR\u000e\u0010\u0002\u001a\u00020\u0003X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0007X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u0004\u001a\u00020\u0005X\u0082\u0004¢\u0006\u0002\n\u0000¨\u0006\u0010"}, d2 = {"Lcom/raymarine/rayconnect/domain/hardware/router/OnboardHardwareSearchManager;", "", "hardwareSearchDriver", "Lcom/raymarine/rayconnect/domain/hardware/NetworkHardwareSearchDriver;", "onboardHardwareManager", "Lcom/raymarine/rayconnect/domain/hardware/router/OnboardHardwareManager;", "logger", "Lcom/raymarine/rayconnect/domain/logging/Logger;", "(Lcom/raymarine/rayconnect/domain/hardware/NetworkHardwareSearchDriver;Lcom/raymarine/rayconnect/domain/hardware/router/OnboardHardwareManager;Lcom/raymarine/rayconnect/domain/logging/Logger;)V", "startCloudConnectorSearch", "Lkotlinx/coroutines/flow/Flow;", "Lcom/raymarine/rayconnect/domain/hardware/router/CloudConnectorSearchEvent;", "startRouterSearch", "stopRouterSearch", "", "stopSecondarySearch", ClientCookie.DOMAIN_ATTR}, k = 1, mv = {1, 6, 0}, xi = 48)
+27-/* loaded from: classes3.dex */
+28:public final class OnboardHardwareSearchManager {
+29:    private final NetworkHardwareSearchDriver hardwareSearchDriver;
+30-    private final Logger logger;
+31-    private final OnboardHardwareManager onboardHardwareManager;
+32-
+33:    public OnboardHardwareSearchManager(NetworkHardwareSearchDriver hardwareSearchDriver, OnboardHardwareManager onboardHardwareManager, Logger logger) {
+34:        Intrinsics.checkNotNullParameter(hardwareSearchDriver, "hardwareSearchDriver");
+35-        Intrinsics.checkNotNullParameter(onboardHardwareManager, "onboardHardwareManager");
+36-        Intrinsics.checkNotNullParameter(logger, "logger");
+37:        this.hardwareSearchDriver = hardwareSearchDriver;
+38-        this.onboardHardwareManager = onboardHardwareManager;
+39-        this.logger = logger;
+40-    }
+41-
+42:    public final Flow<CloudConnectorSearchEvent> startRouterSearch() {
+43:        final Flow<CloudConnectorSearchEvent> flowStartCloudConnectorSearch = startCloudConnectorSearch();
+44:        return new Flow<CloudConnectorSearchEvent>() { // from class: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareSearchManager$startRouterSearch$$inlined$filter$1
+45-            @Override // kotlinx.coroutines.flow.Flow
+46:            public Object collect(FlowCollector<? super CloudConnectorSearchEvent> flowCollector, Continuation continuation) {
+47:                Object objCollect = flowStartCloudConnectorSearch.collect(new AnonymousClass2(flowCollector), continuation);
+48-                return objCollect == IntrinsicsKt.getCOROUTINE_SUSPENDED() ? objCollect : Unit.INSTANCE;
+49-            }
+50-
+51-            /* compiled from: Emitters.kt */
+52-            @Metadata(d1 = {"\u0000\n\n\u0000\n\u0002\u0010\u0002\n\u0002\b\u0007\u0010\u0000\u001a\u00020\u0001\"\u0004\b\u0000\u0010\u0002\"\u0004\b\u0001\u0010\u00032\u0006\u0010\u0004\u001a\u0002H\u0002H\u008a@¢\u0006\u0004\b\u0005\u0010\u0006¨\u0006\b"}, d2 = {"<anonymous>", "", ExifInterface.GPS_DIRECTION_TRUE, "R", "value", "emit", "(Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "kotlinx/coroutines/flow/FlowKt__EmittersKt$unsafeTransform$1$1", "kotlinx/coroutines/flow/FlowKt__TransformKt$filter$$inlined$unsafeTransform$1$2"}, k = 3, mv = {1, 6, 0}, xi = 48)
+53:            /* renamed from: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareSearchManager$startRouterSearch$$inlined$filter$1$2, reason: invalid class name */
+54-            public static final class AnonymousClass2<T> implements FlowCollector, SuspendFunction {
+55-                final /* synthetic */ FlowCollector $this_unsafeFlow;
+56-
+57-                /* compiled from: Emitters.kt */
+58-                @Metadata(k = 3, mv = {1, 6, 0}, xi = 48)
+59:                @DebugMetadata(c = "com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareSearchManager$startRouterSearch$$inlined$filter$1$2", f = "OnboardHardwareSearchManager.kt", i = {}, l = {224}, m = "emit", n = {}, s = {})
+60:                /* renamed from: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareSearchManager$startRouterSearch$$inlined$filter$1$2$1, reason: invalid class name */
+61-                public static final class AnonymousClass1 extends ContinuationImpl {
+62-                    Object L$0;
+63-                    Object L$1;
+64-                    int label;
+65-                    /* synthetic */ Object result;
+66-
+67-                    public AnonymousClass1(Continuation continuation) {
+68-                        super(continuation);
+69-                    }
+70-
+71-                    @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+72-                    public final Object invokeSuspend(Object obj) {
+--
+93-                        if ((anonymousClass1.label & Integer.MIN_VALUE) != 0) {
+94-                            anonymousClass1.label -= Integer.MIN_VALUE;
+95-                        } else {
+96-                            anonymousClass1 = new AnonymousClass1(continuation);
+97-                        }
+98-                    }
+99-                    Object obj2 = anonymousClass1.result;
+100-                    Object coroutine_suspended = IntrinsicsKt.getCOROUTINE_SUSPENDED();
+101-                    int i = anonymousClass1.label;
+102-                    if (i == 0) {
+103-                        ResultKt.throwOnFailure(obj2);
+104-                        FlowCollector flowCollector = this.$this_unsafeFlow;
+105:                        CloudConnectorSearchEvent cloudConnectorSearchEvent = (CloudConnectorSearchEvent) obj;
+106:                        if (cloudConnectorSearchEvent instanceof CloudConnectorSearchEvent.Found) {
+107:                            CloudConnectorSearchEvent.Found found = (CloudConnectorSearchEvent.Found) cloudConnectorSearchEvent;
+108:                            isRouter = (found.getDevice() == null || found.getDevice().getHardwareType() != HardwareType.YachtSenseLink) ? false : found.getDevice().getIsRouter();
+109-                        } else {
+110-                            isRouter = true;
+111-                        }
+112-                        if (isRouter) {
+113-                            anonymousClass1.label = 1;
+114-                            if (flowCollector.emit(obj, anonymousClass1) == coroutine_suspended) {
+115-                                return coroutine_suspended;
+116-                            }
+117-                        }
+118-                    } else {
+119-                        if (i != 1) {
+120-                            throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+121-                        }
+122-                        ResultKt.throwOnFailure(obj2);
+123-                    }
+124-                    return Unit.INSTANCE;
+125-                }
+126-            }
+127-        };
+128-    }
+129-
+130:    public final void stopRouterSearch() {
+131:        this.hardwareSearchDriver.stopCloudConnectorSearch();
+132-    }
+133-
+134:    public final Flow<CloudConnectorSearchEvent> startCloudConnectorSearch() {
+135:        final Flow<NetworkHardwareSearchDriver.SearchEvent> flowStartCloudConnectorSearch = this.hardwareSearchDriver.startCloudConnectorSearch();
+136:        return new Flow<CloudConnectorSearchEvent>() { // from class: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareSearchManager$startCloudConnectorSearch$$inlined$map$1
+137-            @Override // kotlinx.coroutines.flow.Flow
+138:            public Object collect(FlowCollector<? super CloudConnectorSearchEvent> flowCollector, Continuation continuation) {
+139:                Object objCollect = flowStartCloudConnectorSearch.collect(new AnonymousClass2(flowCollector, this), continuation);
+140-                return objCollect == IntrinsicsKt.getCOROUTINE_SUSPENDED() ? objCollect : Unit.INSTANCE;
+141-            }
+142-
+143-            /* compiled from: Emitters.kt */
+144-            @Metadata(d1 = {"\u0000\n\n\u0000\n\u0002\u0010\u0002\n\u0002\b\u0007\u0010\u0000\u001a\u00020\u0001\"\u0004\b\u0000\u0010\u0002\"\u0004\b\u0001\u0010\u00032\u0006\u0010\u0004\u001a\u0002H\u0002H\u008a@¢\u0006\u0004\b\u0005\u0010\u0006¨\u0006\b"}, d2 = {"<anonymous>", "", ExifInterface.GPS_DIRECTION_TRUE, "R", "value", "emit", "(Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "kotlinx/coroutines/flow/FlowKt__EmittersKt$unsafeTransform$1$1", "kotlinx/coroutines/flow/FlowKt__TransformKt$map$$inlined$unsafeTransform$1$2"}, k = 3, mv = {1, 6, 0}, xi = 48)
+145:            /* renamed from: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareSearchManager$startCloudConnectorSearch$$inlined$map$1$2, reason: invalid class name */
+146-            public static final class AnonymousClass2<T> implements FlowCollector, SuspendFunction {
+147-                final /* synthetic */ FlowCollector $this_unsafeFlow;
+148:                final /* synthetic */ OnboardHardwareSearchManager this$0;
+149-
+150-                /* compiled from: Emitters.kt */
+151-                @Metadata(k = 3, mv = {1, 6, 0}, xi = 48)
+152:                @DebugMetadata(c = "com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareSearchManager$startCloudConnectorSearch$$inlined$map$1$2", f = "OnboardHardwareSearchManager.kt", i = {0}, l = {229, 224}, m = "emit", n = {"it"}, s = {"L$1"})
+153:                /* renamed from: com.raymarine.rayconnect.domain.hardware.router.OnboardHardwareSearchManager$startCloudConnectorSearch$$inlined$map$1$2$1, reason: invalid class name */
+154-                public static final class AnonymousClass1 extends ContinuationImpl {
+155-                    Object L$0;
+156-                    Object L$1;
+157-                    int label;
+158-                    /* synthetic */ Object result;
+159-
+160-                    public AnonymousClass1(Continuation continuation) {
+161-                        super(continuation);
+162-                    }
+163-
+164-                    @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+165-                    public final Object invokeSuspend(Object obj) {
+166-                        this.result = obj;
+167-                        this.label |= Integer.MIN_VALUE;
+168-                        return AnonymousClass2.this.emit(null, this);
+169-                    }
+170-                }
+171-
+172:                public AnonymousClass2(FlowCollector flowCollector, OnboardHardwareSearchManager onboardHardwareSearchManager) {
+173-                    this.$this_unsafeFlow = flowCollector;
+174:                    this.this$0 = onboardHardwareSearchManager;
+175-                }
+176-
+177-                /* JADX WARN: Multi-variable type inference failed */
+178-                /* JADX WARN: Removed duplicated region for block: B:44:0x00f1 A[RETURN] */
+179-                /* JADX WARN: Removed duplicated region for block: B:7:0x0014  */
+180-                /* JADX WARN: Type inference failed for: r2v10 */
+181-                /* JADX WARN: Type inference failed for: r2v11 */
+182-                /* JADX WARN: Type inference failed for: r2v12 */
+183-                /* JADX WARN: Type inference failed for: r2v2, types: [kotlinx.coroutines.flow.FlowCollector] */
+184-                /* JADX WARN: Type inference failed for: r2v8 */
+185-                /* JADX WARN: Type inference failed for: r2v9 */
+186-                @Override // kotlinx.coroutines.flow.FlowCollector
+187-                /*
+188-                    Code decompiled incorrectly, please refer to instructions dump.
+189-                */
+190-                public final Object emit(Object obj, Continuation continuation) {
+191-                    AnonymousClass1 anonymousClass1;
+192:                    NetworkHardwareSearchDriver.SearchEvent searchEvent;
+193:                    CloudConnectorSearchEvent.Stopped lost;
+194-                    ?? r2;
+195-                    Object exhaustive;
+196-                    FlowCollector flowCollector;
+197:                    CloudConnectorSearchEvent.Found found;
+198-                    if (continuation instanceof AnonymousClass1) {
+199-                        anonymousClass1 = (AnonymousClass1) continuation;
+200-                        if ((anonymousClass1.label & Integer.MIN_VALUE) != 0) {
+201-                            anonymousClass1.label -= Integer.MIN_VALUE;
+202-                        } else {
+203-                            anonymousClass1 = new AnonymousClass1(continuation);
+204-                        }
+205-                    }
+206-                    Object hardwareStatus = anonymousClass1.result;
+207-                    Object coroutine_suspended = IntrinsicsKt.getCOROUTINE_SUSPENDED();
+208-                    int i = anonymousClass1.label;
+209-                    if (i == 0) {
+210-                        ResultKt.throwOnFailure(hardwareStatus);
+211-                        FlowCollector flowCollector2 = this.$this_unsafeFlow;
+212:                        searchEvent = (NetworkHardwareSearchDriver.SearchEvent) obj;
+213:                        if (searchEvent instanceof NetworkHardwareSearchDriver.SearchEvent.Failure) {
+214:                            NetworkHardwareSearchDriver.SearchEvent.Failure failure = (NetworkHardwareSearchDriver.SearchEvent.Failure) searchEvent;
+215:                            lost = new CloudConnectorSearchEvent.Failure(failure.getErrorCode(), failure.getMessage());
+216-                            r2 = flowCollector2;
+217:                        } else if (searchEvent instanceof NetworkHardwareSearchDriver.SearchEvent.Found) {
+218-                            OnboardHardwareManager onboardHardwareManager = this.this$0.onboardHardwareManager;
+219:                            NetworkDevice device = ((NetworkHardwareSearchDriver.SearchEvent.Found) searchEvent).getDevice();
+220-                            anonymousClass1.L$0 = flowCollector2;
+221:                            anonymousClass1.L$1 = searchEvent;
+222-                            anonymousClass1.label = 1;
+223-                            hardwareStatus = onboardHardwareManager.getHardwareStatus(device, anonymousClass1);
+224-                            flowCollector = flowCollector2;
+225-                            if (hardwareStatus == coroutine_suspended) {
+226-                                return coroutine_suspended;
+227-                            }
+228:                        } else if (searchEvent instanceof NetworkHardwareSearchDriver.SearchEvent.Lost) {
+229:                            lost = new CloudConnectorSearchEvent.Lost(((NetworkHardwareSearchDriver.SearchEvent.Lost) searchEvent).getDevice());
+230-                            r2 = flowCollector2;
+231:                        } else if (Intrinsics.areEqual(searchEvent, NetworkHardwareSearchDriver.SearchEvent.Started.INSTANCE)) {
+232:                            lost = CloudConnectorSearchEvent.Started.INSTANCE;
+233-                            r2 = flowCollector2;
+234-                        } else {
+235:                            if (!Intrinsics.areEqual(searchEvent, NetworkHardwareSearchDriver.SearchEvent.Stopped.INSTANCE)) {
+236-                                throw new NoWhenBranchMatchedException();
+237-                            }
+238:                            lost = CloudConnectorSearchEvent.Stopped.INSTANCE;
+239-                            r2 = flowCollector2;
+240-                        }
+241-                        exhaustive = KotlinExtensionsKt.getExhaustive(lost);
+242-                        anonymousClass1.L$0 = null;
+243-                        anonymousClass1.L$1 = null;
+244-                        anonymousClass1.label = 2;
+245-                        if (r2.emit(exhaustive, anonymousClass1) == coroutine_suspended) {
+246-                            return coroutine_suspended;
+247-                        }
+248-                        return Unit.INSTANCE;
+249-                    }
+250-                    if (i != 1) {
+251-                        if (i != 2) {
+252-                            throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+253-                        }
+254-                        ResultKt.throwOnFailure(hardwareStatus);
+255-                        return Unit.INSTANCE;
+256-                    }
+257:                    searchEvent = (NetworkHardwareSearchDriver.SearchEvent) anonymousClass1.L$1;
+258-                    FlowCollector flowCollector3 = (FlowCollector) anonymousClass1.L$0;
+259-                    ResultKt.throwOnFailure(hardwareStatus);
+260-                    flowCollector = flowCollector3;
+261-                    DeviceStatus deviceStatus = (DeviceStatus) hardwareStatus;
+262-                    if (deviceStatus instanceof DeviceStatus.Failure) {
+263:                        found = new CloudConnectorSearchEvent.Found(null);
+264-                    } else {
+265-                        if (!(deviceStatus instanceof DeviceStatus.Success)) {
+266-                            throw new NoWhenBranchMatchedException();
+267-                        }
+268:                        found = new CloudConnectorSearchEvent.Found(CloudConnectorDevice.INSTANCE.from(((NetworkHardwareSearchDriver.SearchEvent.Found) searchEvent).getDevice(), (DeviceStatus.Success) deviceStatus));
+269-                    }
+270:                    lost = (CloudConnectorSearchEvent) KotlinExtensionsKt.getExhaustive(found);
+271-                    r2 = flowCollector;
+272-                    exhaustive = KotlinExtensionsKt.getExhaustive(lost);
+273-                    anonymousClass1.L$0 = null;
+274-                    anonymousClass1.L$1 = null;
+275-                    anonymousClass1.label = 2;
+276-                    if (r2.emit(exhaustive, anonymousClass1) == coroutine_suspended) {
+277-                    }
+278-                    return Unit.INSTANCE;
+279-                }
+280-            }
+281-        };
+282-    }
+283-
+284:    public final void stopSecondarySearch() {
+285:        this.hardwareSearchDriver.stopCloudConnectorSearch();
+286-    }
+287-}

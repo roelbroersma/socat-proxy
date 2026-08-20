@@ -1,0 +1,363 @@
+===== com/raymarine/rayconnect/modules/mfd/rayview/RayViewViewModelImpl.java =====
+1:package com.raymarine.rayconnect.modules.mfd.rayview;
+2-
+3:import androidx.lifecycle.LifecycleOwner;
+4:import androidx.lifecycle.LiveData;
+5:import androidx.lifecycle.MutableLiveData;
+6:import androidx.lifecycle.ViewModelKt;
+7:import com.microsoft.identity.common.java.authscheme.TokenAuthenticationScheme;
+8:import com.raymarine.rayconnect.KotlinExtensionsKt;
+9:import com.raymarine.rayconnect.arch.BaseViewModel;
+10:import com.raymarine.rayconnect.device.mfd.control.RaymarineControlDriver;
+11:import com.raymarine.rayconnect.device.mfd.db.RaymarineDBDriver;
+12:import com.raymarine.rayconnect.device.rayDevices.RayDevicesManager;
+13:import com.raymarine.rayconnect.device.utils.FormatKt;
+14:import com.raymarine.rayconnect.device.wifi.WifiNetworkManager;
+15:import com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewState;
+16:import com.raymarine.rayconnect.modules.mfd.rayview.signalstrength.WifiSignalStrength;
+17:import com.raymarine.rayconnect.modules.mfd.rayview.signalstrength.WifiSignalStrengthModel;
+18:import com.raymarine.rayconnect.modules.mfd.rayview.signalstrength.WifiSignalStrengthUseCase;
+19:import com.raymarine.rayconnect.modules.mfd.rayview.signalstrength.WifiStrengthModelMapper;
+20:import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+21:import io.reactivex.rxjava3.disposables.Disposable;
+22:import io.reactivex.rxjava3.functions.Consumer;
+23:import io.reactivex.rxjava3.functions.Function;
+24:import io.reactivex.rxjava3.schedulers.Schedulers;
+25:import kotlin.Metadata;
+26:import kotlin.NoWhenBranchMatchedException;
+27:import kotlin.ResultKt;
+28:import kotlin.Unit;
+29:import kotlin.collections.ArraysKt;
+30:import kotlin.coroutines.Continuation;
+31:import kotlin.coroutines.intrinsics.IntrinsicsKt;
+32:import kotlin.coroutines.jvm.internal.DebugMetadata;
+33:import kotlin.coroutines.jvm.internal.SuspendLambda;
+34:import kotlin.jvm.functions.Function2;
+35:import kotlin.jvm.internal.Intrinsics;
+36:import kotlin.text.StringsKt;
+37:import kotlinx.coroutines.BuildersKt__Builders_commonKt;
+38:import kotlinx.coroutines.CoroutineScope;
+39:import kotlinx.coroutines.Dispatchers;
+40:import kotlinx.coroutines.GlobalScope;
+41:import kotlinx.coroutines.flow.Flow;
+42:import kotlinx.coroutines.flow.StateFlow;
+43:import ru.terrakok.cicerone.Router;
+44-
+45:/* compiled from: RayViewViewModel.kt */
+46:@Metadata(d1 = {"\u0000¤\u0001\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\u0010\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u000b\n\u0002\b\u0005\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0002\b\b\n\u0002\u0018\u0002\n\u0002\b\u0006\n\u0002\u0018\u0002\n\u0002\b\u0006\n\u0002\u0010\u000e\n\u0000\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010\b\n\u0002\b\u0002\n\u0002\u0010\u0007\n\u0002\b\u0005\u0018\u00002\b\u0012\u0004\u0012\u00020\u00020\u00012\u00020\u0003BE\u0012\u0006\u0010\u0004\u001a\u00020\u0005\u0012\u0006\u0010\u0006\u001a\u00020\u0007\u0012\u0006\u0010\b\u001a\u00020\t\u0012\u0006\u0010\n\u001a\u00020\u000b\u0012\u0006\u0010\f\u001a\u00020\r\u0012\u0006\u0010\u000e\u001a\u00020\u000f\u0012\u0006\u0010\u0010\u001a\u00020\u0011\u0012\u0006\u0010\u0012\u001a\u00020\u0013¢\u0006\u0002\u0010\u0014J\u0010\u00102\u001a\u00020\u00172\u0006\u00103\u001a\u00020\u001cH\u0016J\b\u00104\u001a\u00020\u001cH\u0016J\u0010\u00105\u001a\u00020\u00172\u0006\u00106\u001a\u000207H\u0016J\b\u00108\u001a\u00020\u0017H\u0016J\u0010\u00109\u001a\u00020\u00172\u0006\u00106\u001a\u000207H\u0016J\u0010\u0010:\u001a\u00020\u00172\u0006\u00106\u001a\u000207H\u0016J\u0010\u0010;\u001a\u00020\u00172\u0006\u00106\u001a\u000207H\u0016J\b\u0010<\u001a\u00020\u0017H\u0016J\n\u0010=\u001a\u0004\u0018\u00010>H\u0016J\u000e\u0010?\u001a\b\u0012\u0004\u0012\u00020A0@H\u0016J(\u0010B\u001a\u00020\u00172\u0006\u0010C\u001a\u00020D2\u0006\u0010E\u001a\u00020D2\u0006\u0010F\u001a\u00020G2\u0006\u0010H\u001a\u00020GH\u0016J\b\u0010I\u001a\u00020\u0017H\u0016J\u0012\u0010J\u001a\u00020\u00172\b\u0010K\u001a\u0004\u0018\u00010\rH\u0016R\u0014\u0010\u0015\u001a\b\u0012\u0004\u0012\u00020\u00170\u0016X\u0082\u0004¢\u0006\u0002\n\u0000R\u0014\u0010\u0018\u001a\b\u0012\u0004\u0012\u00020\u00170\u0016X\u0082\u0004¢\u0006\u0002\n\u0000R\u0014\u0010\u0019\u001a\b\u0012\u0004\u0012\u00020\u001a0\u0016X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u001b\u001a\u00020\u001cX\u0082\u000e¢\u0006\u0002\n\u0000R\u0014\u0010\u001d\u001a\u00020\u00028VX\u0096\u0004¢\u0006\u0006\u001a\u0004\b\u001e\u0010\u001fR\u000e\u0010 \u001a\u00020\u001cX\u0082\u000e¢\u0006\u0002\n\u0000R\u000e\u0010\n\u001a\u00020\u000bX\u0082\u0004¢\u0006\u0002\n\u0000R\u001a\u0010!\u001a\b\u0012\u0004\u0012\u00020#0\"8VX\u0096\u0004¢\u0006\u0006\u001a\u0004\b$\u0010%R\u000e\u0010\b\u001a\u00020\tX\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u0004\u001a\u00020\u0005X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0007X\u0082\u0004¢\u0006\u0002\n\u0000R\u001a\u0010&\u001a\b\u0012\u0004\u0012\u00020\u00170'X\u0096\u0004¢\u0006\b\n\u0000\u001a\u0004\b(\u0010)R\u001a\u0010*\u001a\b\u0012\u0004\u0012\u00020\u00170'X\u0096\u0004¢\u0006\b\n\u0000\u001a\u0004\b+\u0010)R\u001a\u0010,\u001a\b\u0012\u0004\u0012\u00020\u001a0'X\u0096\u0004¢\u0006\b\n\u0000\u001a\u0004\b-\u0010)R\u0010\u0010.\u001a\u0004\u0018\u00010\rX\u0082\u000e¢\u0006\u0002\n\u0000R\u000e\u0010\u0010\u001a\u00020\u0011X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u0010/\u001a\u000200X\u0082.¢\u0006\u0002\n\u0000R\u000e\u0010\u0012\u001a\u00020\u0013X\u0082\u0004¢\u0006\u0002\n\u0000R\u000e\u00101\u001a\u000200X\u0082.¢\u0006\u0002\n\u0000¨\u0006L"}, d2 = {"Lcom/raymarine/rayconnect/modules/mfd/rayview/RayViewViewModelImpl;", "Lcom/raymarine/rayconnect/arch/BaseViewModel;", "Lcom/raymarine/rayconnect/modules/mfd/rayview/RayViewViewState;", "Lcom/raymarine/rayconnect/modules/mfd/rayview/RayViewViewModel;", "raymarineControlDriver", "Lcom/raymarine/rayconnect/device/mfd/control/RaymarineControlDriver;", "raymarineDBDriver", "Lcom/raymarine/rayconnect/device/mfd/db/RaymarineDBDriver;", "rayDevicesManager", "Lcom/raymarine/rayconnect/device/rayDevices/RayDevicesManager;", "networkManager", "Lcom/raymarine/rayconnect/device/wifi/WifiNetworkManager;", "initialControlDevice", "Lcom/raymarine/rayconnect/device/mfd/control/RaymarineControlDriver$RtspDevice;", "router", "Lru/terrakok/cicerone/Router;", "wifiSignalStrengthUseCase", "Lcom/raymarine/rayconnect/modules/mfd/rayview/signalstrength/WifiSignalStrengthUseCase;", "wifiStrengthModelMapper", "Lcom/raymarine/rayconnect/modules/mfd/rayview/signalstrength/WifiStrengthModelMapper;", "(Lcom/raymarine/rayconnect/device/mfd/control/RaymarineControlDriver;Lcom/raymarine/rayconnect/device/mfd/db/RaymarineDBDriver;Lcom/raymarine/rayconnect/device/rayDevices/RayDevicesManager;Lcom/raymarine/rayconnect/device/wifi/WifiNetworkManager;Lcom/raymarine/rayconnect/device/mfd/control/RaymarineControlDriver$RtspDevice;Lru/terrakok/cicerone/Router;Lcom/raymarine/rayconnect/modules/mfd/rayview/signalstrength/WifiSignalStrengthUseCase;Lcom/raymarine/rayconnect/modules/mfd/rayview/signalstrength/WifiStrengthModelMapper;)V", "_showLowWifiStrength", "Landroidx/lifecycle/MutableLiveData;", "", "_showNoConnection", "_showWifiStrength", "Lcom/raymarine/rayconnect/modules/mfd/rayview/signalstrength/WifiSignalStrengthModel;", "connectionAliveStatus", "", "initialState", "getInitialState", "()Lcom/raymarine/rayconnect/modules/mfd/rayview/RayViewViewState;", "isTouchConnected", "networkState", "Lkotlinx/coroutines/flow/StateFlow;", "Lcom/raymarine/rayconnect/device/wifi/WifiNetworkManager$WifiNetworkState;", "getNetworkState", "()Lkotlinx/coroutines/flow/StateFlow;", "showLowWifiStrength", "Landroidx/lifecycle/LiveData;", "getShowLowWifiStrength", "()Landroidx/lifecycle/LiveData;", "showNoConnection", "getShowNoConnection", "showWifiStrength", "getShowWifiStrength", "viewedDevice", "wifiStrengthDisposable", "Lio/reactivex/rxjava3/disposables/Disposable;", "wifiStrengthUseCaseDisposable", "connectTouch", "isTablet", "disconnectTouch", "onPause", "owner", "Landroidx/lifecycle/LifecycleOwner;", "onPipelineError", "onResume", "onStart", "onStop", "returnBack", "rtspPath", "", "searchRayControlDevices", "Lkotlinx/coroutines/flow/Flow;", "Lcom/raymarine/rayconnect/device/mfd/control/RaymarineControlDriver$RtspEvent;", "sendTouchEvent", "touchId", "", "state", "percentX", "", "percentY", "startObserverMFDConnection", "view", "device", "app_release"}, k = 1, mv = {1, 6, 0}, xi = 48)
+47-/* loaded from: classes3.dex */
+48:public final class RayViewViewModelImpl extends BaseViewModel<RayViewViewState> implements RayViewViewModel {
+49:    private final MutableLiveData<Unit> _showLowWifiStrength;
+50:    private final MutableLiveData<Unit> _showNoConnection;
+51:    private final MutableLiveData<WifiSignalStrengthModel> _showWifiStrength;
+52:    private boolean connectionAliveStatus;
+53:    private boolean isTouchConnected;
+54:    private final WifiNetworkManager networkManager;
+55-    private final RayDevicesManager rayDevicesManager;
+56:    private final RaymarineControlDriver raymarineControlDriver;
+57-    private final RaymarineDBDriver raymarineDBDriver;
+58:    private final LiveData<Unit> showLowWifiStrength;
+59:    private final LiveData<Unit> showNoConnection;
+60:    private final LiveData<WifiSignalStrengthModel> showWifiStrength;
+61:    private RaymarineControlDriver.RtspDevice viewedDevice;
+62:    private final WifiSignalStrengthUseCase wifiSignalStrengthUseCase;
+63:    private Disposable wifiStrengthDisposable;
+64:    private final WifiStrengthModelMapper wifiStrengthModelMapper;
+65:    private Disposable wifiStrengthUseCaseDisposable;
+66-
+67-    /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
+68:    public RayViewViewModelImpl(RaymarineControlDriver raymarineControlDriver, RaymarineDBDriver raymarineDBDriver, RayDevicesManager rayDevicesManager, WifiNetworkManager networkManager, RaymarineControlDriver.RtspDevice initialControlDevice, Router router, WifiSignalStrengthUseCase wifiSignalStrengthUseCase, WifiStrengthModelMapper wifiStrengthModelMapper) {
+69-        super(router);
+70:        Intrinsics.checkNotNullParameter(raymarineControlDriver, "raymarineControlDriver");
+71-        Intrinsics.checkNotNullParameter(raymarineDBDriver, "raymarineDBDriver");
+72-        Intrinsics.checkNotNullParameter(rayDevicesManager, "rayDevicesManager");
+73:        Intrinsics.checkNotNullParameter(networkManager, "networkManager");
+74:        Intrinsics.checkNotNullParameter(initialControlDevice, "initialControlDevice");
+75-        Intrinsics.checkNotNullParameter(router, "router");
+76:        Intrinsics.checkNotNullParameter(wifiSignalStrengthUseCase, "wifiSignalStrengthUseCase");
+77:        Intrinsics.checkNotNullParameter(wifiStrengthModelMapper, "wifiStrengthModelMapper");
+78:        this.raymarineControlDriver = raymarineControlDriver;
+79-        this.raymarineDBDriver = raymarineDBDriver;
+80-        this.rayDevicesManager = rayDevicesManager;
+81:        this.networkManager = networkManager;
+82:        this.wifiSignalStrengthUseCase = wifiSignalStrengthUseCase;
+83:        this.wifiStrengthModelMapper = wifiStrengthModelMapper;
+84:        this.viewedDevice = initialControlDevice;
+85:        this.connectionAliveStatus = true;
+86-        MutableLiveData<Unit> mutableLiveData = new MutableLiveData<>();
+87:        this._showNoConnection = mutableLiveData;
+88:        this.showNoConnection = mutableLiveData;
+89:        MutableLiveData<WifiSignalStrengthModel> mutableLiveData2 = new MutableLiveData<>();
+90:        this._showWifiStrength = mutableLiveData2;
+91:        this.showWifiStrength = mutableLiveData2;
+92-        MutableLiveData<Unit> mutableLiveData3 = new MutableLiveData<>();
+93:        this._showLowWifiStrength = mutableLiveData3;
+94:        this.showLowWifiStrength = mutableLiveData3;
+95-    }
+96-
+97:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+98:    public LiveData<Unit> getShowNoConnection() {
+99:        return this.showNoConnection;
+100-    }
+101-
+102:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+103:    public LiveData<WifiSignalStrengthModel> getShowWifiStrength() {
+104:        return this.showWifiStrength;
+105-    }
+106-
+107:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+108:    public LiveData<Unit> getShowLowWifiStrength() {
+109:        return this.showLowWifiStrength;
+110-    }
+111-
+112:    @Override // com.raymarine.rayconnect.arch.ViewModel
+113:    public RayViewViewState getInitialState() {
+114:        return RayViewViewState.Ok.INSTANCE;
+115-    }
+116-
+117:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+118:    public StateFlow<WifiNetworkManager.WifiNetworkState> getNetworkState() {
+119:        return this.networkManager.getNetworkStateLiveData();
+120-    }
+121-
+122-    @Override // androidx.lifecycle.DefaultLifecycleObserver, androidx.lifecycle.FullLifecycleObserver
+123:    public void onStart(LifecycleOwner owner) {
+124-        Intrinsics.checkNotNullParameter(owner, "owner");
+125:        Disposable disposableSubscribe = this.wifiSignalStrengthUseCase.getSignalStrength().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModelImpl$$ExternalSyntheticLambda0
+126-            @Override // io.reactivex.rxjava3.functions.Consumer
+127-            public final void accept(Object obj) {
+128:                RayViewViewModelImpl.m831onStart$lambda0(this.f$0, (WifiSignalStrength) obj);
+129-            }
+130:        }, new Consumer() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModelImpl$$ExternalSyntheticLambda3
+131-            @Override // io.reactivex.rxjava3.functions.Consumer
+132-            public final void accept(Object obj) {
+133:                RayViewViewModelImpl.m832onStart$lambda1(this.f$0, (Throwable) obj);
+134-            }
+135-        });
+136:        Intrinsics.checkNotNullExpressionValue(disposableSubscribe, "wifiSignalStrengthUseCas…rror\", it))\n            }");
+137:        this.wifiStrengthDisposable = disposableSubscribe;
+138-    }
+139-
+140-    /* JADX INFO: Access modifiers changed from: private */
+141:    /* renamed from: onStart$lambda-0, reason: not valid java name */
+142:    public static final void m831onStart$lambda0(RayViewViewModelImpl this$0, WifiSignalStrength wifiSignalStrength) {
+143-        Intrinsics.checkNotNullParameter(this$0, "this$0");
+144:        if (wifiSignalStrength == WifiSignalStrength.POOR) {
+145:            this$0._showLowWifiStrength.setValue(Unit.INSTANCE);
+146-        }
+147-    }
+148-
+149-    /* JADX INFO: Access modifiers changed from: private */
+150:    /* renamed from: onStart$lambda-1, reason: not valid java name */
+151:    public static final void m832onStart$lambda1(RayViewViewModelImpl this$0, Throwable th) {
+152-        Intrinsics.checkNotNullParameter(this$0, "this$0");
+153:        this$0.getLogger().cloudError(new Exception("Single shot Wifi strength calculation error", th));
+154-    }
+155-
+156-    @Override // androidx.lifecycle.DefaultLifecycleObserver, androidx.lifecycle.FullLifecycleObserver
+157:    public void onStop(LifecycleOwner owner) {
+158-        Intrinsics.checkNotNullParameter(owner, "owner");
+159:        Disposable disposable = this.wifiStrengthDisposable;
+160-        if (disposable == null) {
+161:            Intrinsics.throwUninitializedPropertyAccessException("wifiStrengthDisposable");
+162-            disposable = null;
+163-        }
+164-        disposable.dispose();
+165-    }
+166-
+167-    @Override // androidx.lifecycle.DefaultLifecycleObserver, androidx.lifecycle.FullLifecycleObserver
+168-    public void onResume(LifecycleOwner owner) {
+169-        Intrinsics.checkNotNullParameter(owner, "owner");
+170:        Disposable disposableSubscribe = this.wifiSignalStrengthUseCase.observeSignalStrength().map(new Function() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModelImpl$$ExternalSyntheticLambda4
+171-            @Override // io.reactivex.rxjava3.functions.Function
+172-            public final Object apply(Object obj) {
+173:                return RayViewViewModelImpl.m828onResume$lambda2(this.f$0, (WifiSignalStrength) obj);
+174-            }
+175:        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModelImpl$$ExternalSyntheticLambda1
+176-            @Override // io.reactivex.rxjava3.functions.Consumer
+177-            public final void accept(Object obj) {
+178:                RayViewViewModelImpl.m829onResume$lambda3(this.f$0, (WifiSignalStrengthModel) obj);
+179-            }
+180:        }, new Consumer() { // from class: com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModelImpl$$ExternalSyntheticLambda2
+181-            @Override // io.reactivex.rxjava3.functions.Consumer
+182-            public final void accept(Object obj) {
+183:                RayViewViewModelImpl.m830onResume$lambda4(this.f$0, (Throwable) obj);
+184-            }
+185-        });
+186:        Intrinsics.checkNotNullExpressionValue(disposableSubscribe, "wifiSignalStrengthUseCas…\", it))\n                }");
+187:        this.wifiStrengthUseCaseDisposable = disposableSubscribe;
+188-    }
+189-
+190-    /* JADX INFO: Access modifiers changed from: private */
+191-    /* renamed from: onResume$lambda-2, reason: not valid java name */
+192:    public static final WifiSignalStrengthModel m828onResume$lambda2(RayViewViewModelImpl this$0, WifiSignalStrength it) {
+193-        Intrinsics.checkNotNullParameter(this$0, "this$0");
+194:        WifiStrengthModelMapper wifiStrengthModelMapper = this$0.wifiStrengthModelMapper;
+195-        Intrinsics.checkNotNullExpressionValue(it, "it");
+196:        return wifiStrengthModelMapper.map(it);
+197-    }
+198-
+199-    /* JADX INFO: Access modifiers changed from: private */
+200-    /* renamed from: onResume$lambda-3, reason: not valid java name */
+201:    public static final void m829onResume$lambda3(RayViewViewModelImpl this$0, WifiSignalStrengthModel wifiSignalStrengthModel) {
+202-        Intrinsics.checkNotNullParameter(this$0, "this$0");
+203:        this$0._showWifiStrength.setValue(wifiSignalStrengthModel);
+204-    }
+205-
+206-    /* JADX INFO: Access modifiers changed from: private */
+207-    /* renamed from: onResume$lambda-4, reason: not valid java name */
+208:    public static final void m830onResume$lambda4(RayViewViewModelImpl this$0, Throwable th) {
+209-        Intrinsics.checkNotNullParameter(this$0, "this$0");
+210:        this$0.getLogger().cloudError(new Exception("Wifi strength calculation error", th));
+211-    }
+212-
+213-    @Override // androidx.lifecycle.DefaultLifecycleObserver, androidx.lifecycle.FullLifecycleObserver
+214-    public void onPause(LifecycleOwner owner) {
+215-        Intrinsics.checkNotNullParameter(owner, "owner");
+216:        Disposable disposable = this.wifiStrengthUseCaseDisposable;
+217-        if (disposable == null) {
+218:            Intrinsics.throwUninitializedPropertyAccessException("wifiStrengthUseCaseDisposable");
+219-            disposable = null;
+220-        }
+221-        disposable.dispose();
+222-    }
+223-
+224:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+225:    public void view(RaymarineControlDriver.RtspDevice device) {
+226-        if (device == null) {
+227-            this.viewedDevice = null;
+228:            disconnectTouch();
+229:            getViewStateLiveData().setValue(RayViewViewState.ConnectionLost.INSTANCE);
+230:        } else if (Intrinsics.areEqual(device.getType(), RaymarineControlDriver.RtspDevice.Type.Element.INSTANCE)) {
+231:            getViewStateLiveData().setValue(RayViewViewState.RTSPElementWarning.INSTANCE);
+232-        } else {
+233-            this.viewedDevice = device;
+234-        }
+235-    }
+236-
+237:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+238-    public String rtspPath() {
+239-        if (this.viewedDevice != null) {
+240-            StringBuilder sbAppend = new StringBuilder().append("rtsp://");
+241:            RaymarineControlDriver.RtspDevice rtspDevice = this.viewedDevice;
+242-            Intrinsics.checkNotNull(rtspDevice);
+243:            return sbAppend.append(rtspDevice.getAddress()).append(":8554/RAYMARINEMFD").toString();
+244-        }
+245:        getViewStateLiveData().setValue(RayViewViewState.ConnectionLost.INSTANCE);
+246-        return (String) null;
+247-    }
+248-
+249:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+250:    public void connectTouch(boolean isTablet) {
+251:        disconnectTouch();
+252:        RaymarineControlDriver.RtspDevice rtspDevice = this.viewedDevice;
+253-        if (rtspDevice == null) {
+254-            return;
+255-        }
+256:        boolean zContains = ArraysKt.contains(FormatKt.getLegacyMFDSerialPrefix(), StringsKt.split$default((CharSequence) rtspDevice.getSerial(), new String[]{TokenAuthenticationScheme.SCHEME_DELIMITER}, false, 0, 6, (Object) null).get(0));
+257-        if ((zContains && isTablet) || !zContains) {
+258:            BuildersKt__Builders_commonKt.launch$default(ViewModelKt.getViewModelScope(this), null, null, new RayViewViewModelImpl$connectTouch$1$1(this, rtspDevice, null), 3, null);
+259-        } else {
+260:            getViewStateLiveData().postValue(RayViewViewState.TouchControlError.INSTANCE);
+261:            this.isTouchConnected = false;
+262-        }
+263-    }
+264-
+265:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+266:    public boolean disconnectTouch() {
+267:        RaymarineControlDriver.RaymarineOperationResult<Boolean> raymarineOperationResultIsControlling = this.raymarineControlDriver.isControlling();
+268:        if (!(raymarineOperationResultIsControlling instanceof RaymarineControlDriver.RaymarineOperationResult.Success) || !((Boolean) ((RaymarineControlDriver.RaymarineOperationResult.Success) raymarineOperationResultIsControlling).getData()).booleanValue()) {
+269-            return false;
+270-        }
+271:        this.raymarineControlDriver.disconnect();
+272-        return true;
+273-    }
+274-
+275:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+276-    public void sendTouchEvent(int touchId, int state, float percentX, float percentY) {
+277:        RaymarineControlDriver.RtspDevice rtspDevice;
+278:        RaymarineControlDriver.TouchEvent.State state2;
+279:        if (!this.isTouchConnected || (rtspDevice = this.viewedDevice) == null) {
+280-            return;
+281-        }
+282:        if (rtspDevice.isConnectable() && rtspDevice.isSupportTouch()) {
+283-            byte b = (byte) touchId;
+284-            if (state == 0) {
+285:                state2 = RaymarineControlDriver.TouchEvent.State.TOUCH_DOWN;
+286-            } else if (state == 1) {
+287:                state2 = RaymarineControlDriver.TouchEvent.State.TOUCH_UP;
+288-            } else if (state == 2) {
+289:                state2 = RaymarineControlDriver.TouchEvent.State.TOUCH_MOVED;
+290-            } else {
+291:                state2 = RaymarineControlDriver.TouchEvent.State.TOUCH_NONE;
+292-            }
+293:            RaymarineControlDriver.RaymarineOperationResult<Unit> raymarineOperationResultSendTouch = this.raymarineControlDriver.sendTouch(new RaymarineControlDriver.TouchEvent(b, state2, percentX, percentY));
+294:            if (raymarineOperationResultSendTouch instanceof RaymarineControlDriver.RaymarineOperationResult.Error) {
+295:                getViewStateLiveData().setValue(RayViewViewState.TouchControlError.INSTANCE);
+296:            } else if (raymarineOperationResultSendTouch instanceof RaymarineControlDriver.RaymarineOperationResult.Success) {
+297:                getViewStateLiveData().setValue(RayViewViewState.TouchControlOk.INSTANCE);
+298-            } else {
+299-                throw new NoWhenBranchMatchedException();
+300-            }
+301-            KotlinExtensionsKt.getExhaustive(Unit.INSTANCE);
+302-            return;
+303-        }
+304:        getViewStateLiveData().setValue(RayViewViewState.TouchControlError.INSTANCE);
+305-    }
+306-
+307:    @Override // com.raymarine.rayconnect.arch.BaseViewModel, com.raymarine.rayconnect.arch.ViewModel
+308-    public void returnBack() {
+309:        this.raymarineControlDriver.disconnect();
+310-        super.returnBack();
+311-    }
+312-
+313:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+314:    public Flow<RaymarineControlDriver.RtspEvent> searchRayControlDevices() {
+315:        return RaymarineControlDriver.DefaultImpls.lookup$default(this.raymarineControlDriver, null, 1, null);
+316-    }
+317-
+318:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+319:    public void startObserverMFDConnection() {
+320:        this.rayDevicesManager.shouldStopRayDBService(false);
+321:        this.rayDevicesManager.startObserverMFDConnection();
+322-    }
+323-
+324:    /* compiled from: RayViewViewModel.kt */
+325-    @Metadata(d1 = {"\u0000\n\n\u0000\n\u0002\u0010\u0002\n\u0002\u0018\u0002\u0010\u0000\u001a\u00020\u0001*\u00020\u0002H\u008a@"}, d2 = {"<anonymous>", "", "Lkotlinx/coroutines/CoroutineScope;"}, k = 3, mv = {1, 6, 0}, xi = 48)
+326:    @DebugMetadata(c = "com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModelImpl$onPipelineError$1", f = "RayViewViewModel.kt", i = {}, l = {}, m = "invokeSuspend", n = {}, s = {})
+327:    /* renamed from: com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModelImpl$onPipelineError$1, reason: invalid class name */
+328-    static final class AnonymousClass1 extends SuspendLambda implements Function2<CoroutineScope, Continuation<? super Unit>, Object> {
+329-        int label;
+330-
+331-        AnonymousClass1(Continuation<? super AnonymousClass1> continuation) {
+332-            super(2, continuation);
+333-        }
+334-
+335-        @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+336-        public final Continuation<Unit> create(Object obj, Continuation<?> continuation) {
+337:            return RayViewViewModelImpl.this.new AnonymousClass1(continuation);
+338-        }
+339-
+340-        @Override // kotlin.jvm.functions.Function2
+341-        public final Object invoke(CoroutineScope coroutineScope, Continuation<? super Unit> continuation) {
+342-            return ((AnonymousClass1) create(coroutineScope, continuation)).invokeSuspend(Unit.INSTANCE);
+343-        }
+344-
+345-        @Override // kotlin.coroutines.jvm.internal.BaseContinuationImpl
+346-        public final Object invokeSuspend(Object obj) {
+347-            IntrinsicsKt.getCOROUTINE_SUSPENDED();
+348-            if (this.label != 0) {
+349-                throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+350-            }
+351-            ResultKt.throwOnFailure(obj);
+352:            RayViewViewModelImpl.this.disconnectTouch();
+353:            RayViewViewModelImpl.this._showNoConnection.setValue(Unit.INSTANCE);
+354-            return Unit.INSTANCE;
+355-        }
+356-    }
+357-
+358:    @Override // com.raymarine.rayconnect.modules.mfd.rayview.RayViewViewModel
+359-    public void onPipelineError() {
+360-        BuildersKt__Builders_commonKt.launch$default(GlobalScope.INSTANCE, Dispatchers.getMain(), null, new AnonymousClass1(null), 2, null);
+361-    }
+362-}

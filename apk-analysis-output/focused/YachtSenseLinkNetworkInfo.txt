@@ -1,0 +1,35 @@
+===== com/raymarine/rayconnect/domain/boat/YachtSenseLinkNetworkInfo.java =====
+1:package com.raymarine.rayconnect.domain.boat;
+2-
+3:import cz.msebera.android.httpclient.cookie.ClientCookie;
+4:import kotlin.Metadata;
+5:import kotlin.jvm.internal.Intrinsics;
+6-
+7:/* compiled from: YachtSenseLinkNetworkInfo.kt */
+8:@Metadata(d1 = {"\u0000\u001e\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0010\u000e\n\u0000\n\u0002\u0010\b\n\u0000\n\u0002\u0010\u000b\n\u0002\b\u0007\u0018\u00002\u00020\u0001B\u001d\u0012\u0006\u0010\u0002\u001a\u00020\u0003\u0012\u0006\u0010\u0004\u001a\u00020\u0005\u0012\u0006\u0010\u0006\u001a\u00020\u0007¢\u0006\u0002\u0010\bR\u0011\u0010\u0006\u001a\u00020\u0007¢\u0006\b\n\u0000\u001a\u0004\b\u0006\u0010\tR\u0011\u0010\u0004\u001a\u00020\u0005¢\u0006\b\n\u0000\u001a\u0004\b\n\u0010\u000bR\u0011\u0010\u0002\u001a\u00020\u0003¢\u0006\b\n\u0000\u001a\u0004\b\f\u0010\r¨\u0006\u000e"}, d2 = {"Lcom/raymarine/rayconnect/domain/boat/YachtSenseLinkNetworkInfo;", "", "simName", "", "networkStatus", "", "isWifi", "", "(Ljava/lang/String;IZ)V", "()Z", "getNetworkStatus", "()I", "getSimName", "()Ljava/lang/String;", ClientCookie.DOMAIN_ATTR}, k = 1, mv = {1, 6, 0}, xi = 48)
+9-/* loaded from: classes3.dex */
+10:public final class YachtSenseLinkNetworkInfo {
+11:    private final boolean isWifi;
+12:    private final int networkStatus;
+13-    private final String simName;
+14-
+15:    public YachtSenseLinkNetworkInfo(String simName, int i, boolean z) {
+16-        Intrinsics.checkNotNullParameter(simName, "simName");
+17-        this.simName = simName;
+18:        this.networkStatus = i;
+19:        this.isWifi = z;
+20-    }
+21-
+22-    public final String getSimName() {
+23-        return this.simName;
+24-    }
+25-
+26:    public final int getNetworkStatus() {
+27:        return this.networkStatus;
+28-    }
+29-
+30:    /* renamed from: isWifi, reason: from getter */
+31:    public final boolean getIsWifi() {
+32:        return this.isWifi;
+33-    }
+34-}
