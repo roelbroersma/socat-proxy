@@ -1,0 +1,74 @@
+name: Monitor YachtSense RutOS build
+
+on:
+  push:
+    branches:
+      - yachtsense-rutos-vuci
+    paths:
+      - '.github/workflows/monitor-yachtsense-build.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: yachtsense-rutos-vuci
+          fetch-depth: 0
+
+      - name: Follow package build and publish status
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p rutos-yachtsense
+          api="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+          headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GH_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28")
+
+          run_id=""
+          for attempt in $(seq 1 30); do
+            curl -fsSL "${headers[@]}" \
+              "${api}/actions/workflows/build-yachtsense-rutos.yml/runs?branch=yachtsense-rutos-vuci&per_page=5" \
+              -o /tmp/runs.json
+            run_id="$(jq -r '[.workflow_runs[] | select(.name == "Build YachtSense RutOS package")][0].id // empty' /tmp/runs.json)"
+            [ -n "$run_id" ] && break
+            sleep 10
+          done
+          [ -n "$run_id" ] || { echo 'Build run not found' >&2; exit 1; }
+
+          for attempt in $(seq 1 360); do
+            curl -fsSL "${headers[@]}" "${api}/actions/runs/${run_id}" -o /tmp/run.json
+            status="$(jq -r '.status' /tmp/run.json)"
+            conclusion="$(jq -r '.conclusion // ""' /tmp/run.json)"
+            {
+              echo "run_id=${run_id}"
+              echo "status=${status}"
+              echo "conclusion=${conclusion}"
+              echo "url=$(jq -r '.html_url' /tmp/run.json)"
+              echo "head_sha=$(jq -r '.head_sha' /tmp/run.json)"
+              echo "updated_at=$(date -u +%FT%TZ)"
+            } > rutos-yachtsense/build-status.txt
+            cp /tmp/run.json rutos-yachtsense/build-run.json
+            [ "$status" = "completed" ] && break
+            sleep 20
+          done
+
+          curl -fsSL "${headers[@]}" "${api}/actions/runs/${run_id}/artifacts" \
+            -o rutos-yachtsense/build-artifacts.json || true
+          curl -fsSL "${headers[@]}" "${api}/actions/runs/${run_id}/jobs?per_page=100" \
+            -o rutos-yachtsense/build-jobs.json || true
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rutos-yachtsense/build-status.txt rutos-yachtsense/build-run.json \
+            rutos-yachtsense/build-artifacts.json rutos-yachtsense/build-jobs.json
+          git commit -m "Publish YachtSense RutOS build status" || exit 0
+          git pull --rebase origin yachtsense-rutos-vuci
+          git push origin HEAD:yachtsense-rutos-vuci
