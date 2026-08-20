@@ -1,0 +1,128 @@
+name: Raymarine APK analysis
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - raymarine-firmware-analysis
+    paths:
+      - .github/workflows/raymarine-apk-analysis.yml
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: raymarine-firmware-analysis
+          fetch-depth: 0
+
+      - name: Download Raymarine Android app
+        id: analyze
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf apk-work apk-analysis-output
+          mkdir -p apk-work/download apk-work/report apk-analysis-output
+          cd apk-work/download
+          if curl -fL --retry 3 --retry-delay 3 -A 'Mozilla/5.0' \
+            'https://d.apkpure.com/b/XAPK/com.raymarine.rayconnect?version=latest' \
+            -o raymarine.bundle; then
+            echo current-xapk > ../report/download-source.txt
+          elif curl -fL --retry 3 --retry-delay 3 -A 'Mozilla/5.0' \
+            'https://d.apkpure.net/b/APK/com.raymarine.rayconnect?nc=arm64-v8a%2Carmeabi-v7a%2Cx86%2Cx86_64&sv=26&versionCode=528' \
+            -o raymarine.bundle; then
+            echo apkpure-2.1.1-apk > ../report/download-source.txt
+          else
+            exit 1
+          fi
+          file raymarine.bundle > ../report/download-file.txt
+          sha256sum raymarine.bundle > ../report/bundle-sha256.txt
+
+      - name: Extract and decompile
+        if: steps.analyze.outcome == 'success'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p apk-work/xapk apk-work/jadx apk-work/unpacked
+          B=apk-work/download/raymarine.bundle
+          if unzip -t "$B" >/dev/null 2>&1 && unzip -Z1 "$B" | grep -qE '\.apk$'; then
+            unzip -q "$B" -d apk-work/xapk
+          else
+            cp "$B" apk-work/xapk/com.raymarine.rayconnect.apk
+          fi
+          find apk-work/xapk -type f -name '*.apk' -printf '%p\n' | sort > apk-work/report/apks.txt
+          BASE="$(find apk-work/xapk -type f \( -name 'base.apk' -o -name 'com.raymarine.rayconnect.apk' \) | head -n1)"
+          [ -n "$BASE" ] || BASE="$(find apk-work/xapk -type f -name '*.apk' | head -n1)"
+          echo "$BASE" > apk-work/report/base-apk.txt
+          sha256sum "$BASE" >> apk-work/report/bundle-sha256.txt
+          curl -fL --retry 3 'https://github.com/skylot/jadx/releases/download/v1.5.2/jadx-1.5.2.zip' -o /tmp/jadx.zip
+          unzip -q /tmp/jadx.zip -d /tmp/jadx
+          /tmp/jadx/bin/jadx -j 4 --no-res --show-bad-code -d apk-work/jadx "$BASE" || true
+          find apk-work/jadx -type f | wc -l > apk-work/report/jadx-file-count.txt
+          i=0
+          while IFS= read -r apk; do
+            i=$((i+1)); mkdir -p "apk-work/unpacked/$i"; unzip -q -o "$apk" -d "apk-work/unpacked/$i" || true
+          done < apk-work/report/apks.txt
+          find apk-work/unpacked -type f -name '*.so' -printf '%p\n' | sort > apk-work/report/native-libs.txt
+
+      - name: Find network discovery and mirroring code
+        if: steps.analyze.outcome == 'success'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PAT='YachtSense|Yachtsense|yachtsense|MFD|mfd|NsdManager|DnsSd|DNS-SD|mDNS|mdns|Bonjour|zeroconf|_http\._tcp|_ray|RayNet|MulticastSocket|DatagramSocket|multicast|224\.0\.0\.251|5353|7777|VNC|vnc|RFB|rfb|RTSP|rtsp|mirror|Mirror|screen.?stream|5900|5901|discover|Discovery|NetworkInterface|WifiManager'
+          grep -RniE --binary-files=without-match "$PAT" apk-work/jadx 2>/dev/null | head -n 20000 > apk-work/report/interesting.txt || true
+          : > apk-work/report/native-strings.txt
+          while IFS= read -r so; do
+            echo "===== $so =====" >> apk-work/report/native-strings.txt
+            strings -a "$so" | grep -iE 'yachtsense|raymarine|mfd|mdns|dns.?sd|bonjour|zeroconf|_http\._tcp|multicast|224\.0\.0\.251|5353|7777|vnc|rfb|rtsp|mirror|stream|5900|5901|discov' | sort -u | head -n 3000 >> apk-work/report/native-strings.txt || true
+          done < apk-work/report/native-libs.txt
+          grep -RilE --binary-files=without-match 'YachtSense|NsdManager|DnsSd|mDNS|_http\._tcp|VNC|RFB|RTSP|mirror|screen.?stream|MulticastSocket|DatagramSocket' apk-work/jadx 2>/dev/null | head -n 400 > apk-work/report/selected-files.txt || true
+          : > apk-work/report/source-excerpts.txt
+          while IFS= read -r f; do
+            [ -f "$f" ] || continue
+            echo "===== ${f#apk-work/jadx/} =====" >> apk-work/report/source-excerpts.txt
+            grep -nEi -C 14 'YachtSense|NsdManager|DnsSd|mDNS|_http\._tcp|VNC|RFB|RTSP|mirror|screen.?stream|MulticastSocket|DatagramSocket' "$f" >> apk-work/report/source-excerpts.txt || true
+          done < apk-work/report/selected-files.txt
+
+      - name: Publish compact APK report
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          rm -rf apk-analysis-output
+          mkdir -p apk-analysis-output
+          if [ -d apk-work/report ]; then cp -a apk-work/report/. apk-analysis-output/; fi
+          {
+            echo "analysis_outcome=${{ steps.analyze.outcome }}"
+            echo "published_at=$(date -u +%FT%TZ)"
+            echo "source_commit=${GITHUB_SHA}"
+            echo "run_id=${GITHUB_RUN_ID}"
+          } > apk-analysis-output/workflow-status.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A apk-analysis-output
+          git commit -m 'Publish Raymarine APK analysis' || exit 0
+          for attempt in 1 2 3; do
+            git pull --rebase origin raymarine-firmware-analysis && \
+              git push origin HEAD:raymarine-firmware-analysis && exit 0
+            sleep 3
+          done
+          exit 1
+
+      - name: Upload APK analysis artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: raymarine-apk-analysis
+          path: apk-work/report/
+          if-no-files-found: warn
+          retention-days: 3
+          compression-level: 9
