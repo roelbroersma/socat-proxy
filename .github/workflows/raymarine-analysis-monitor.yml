@@ -1,6 +1,6 @@
 name: Raymarine analysis monitor
 
-# Refresh marker: raymarine-apk-analysis
+# Refresh marker: focused-raymarine-apk-analysis-2
 on:
   push:
     branches:
@@ -38,10 +38,7 @@ jobs:
           data = json.loads(Path('analysis-output/actions-runs.json').read_text())
           lines = []
           for run in data.get('workflow_runs', []):
-              lines.append(
-                  f"{run.get('id')}\t{run.get('name')}\t{run.get('status')}\t"
-                  f"{run.get('conclusion')}\t{run.get('head_sha')}\t{run.get('html_url')}"
-              )
+              lines.append(f"{run.get('id')}\t{run.get('name')}\t{run.get('status')}\t{run.get('conclusion')}\t{run.get('head_sha')}\t{run.get('html_url')}")
           Path('analysis-output/actions-runs.txt').write_text('\n'.join(lines) + '\n')
           PY
           git config user.name "github-actions[bot]"
