@@ -1,3 +1,5 @@
-32401244190	Raymarine analysis monitor	in_progress	None	1028fcff1571f2702d009e8d335c1a73189b5e35	https://github.com/roelbroersma/socat-proxy/actions/runs/32401244190
-32401144518	Raymarine firmware analysis	in_progress	None	c1f5dde35b8ab5beb995ee6a60e7d5f02cfa9942	https://github.com/roelbroersma/socat-proxy/actions/runs/32401144518
+32401737293	Raymarine analysis monitor	in_progress	None	e8a69c9a872e8bc3dc6961e6d75005c5b9fc6cde	https://github.com/roelbroersma/socat-proxy/actions/runs/32401737293
+32401697450	Raymarine firmware analysis	in_progress	None	6a4b85b24cc50fb0086592ccd09305f131152e6f	https://github.com/roelbroersma/socat-proxy/actions/runs/32401697450
+32401244190	Raymarine analysis monitor	completed	success	1028fcff1571f2702d009e8d335c1a73189b5e35	https://github.com/roelbroersma/socat-proxy/actions/runs/32401244190
+32401144518	Raymarine firmware analysis	completed	failure	c1f5dde35b8ab5beb995ee6a60e7d5f02cfa9942	https://github.com/roelbroersma/socat-proxy/actions/runs/32401144518
 32400740234	Raymarine firmware analysis	completed	success	ced5fbbda45705311128a8a3ea69d3ee018121c8	https://github.com/roelbroersma/socat-proxy/actions/runs/32400740234
