@@ -1,5 +1,7 @@
-32425187638	Raymarine analysis monitor	in_progress	None	ff408dcdc79556927da9a6edd92f2a251405129d	https://github.com/roelbroersma/socat-proxy/actions/runs/32425187638
-32425075694	Raymarine APK analysis	in_progress	None	ede063913f245a29d753be97c67583c28ab7d5c0	https://github.com/roelbroersma/socat-proxy/actions/runs/32425075694
+32425420320	Raymarine analysis monitor	in_progress	None	88f31af1112f814019c646005983987cfe984ecd	https://github.com/roelbroersma/socat-proxy/actions/runs/32425420320
+32425384109	Raymarine APK analysis	in_progress	None	ee44a9aa633f876f6565c4df4f1ee8bc1909f4c7	https://github.com/roelbroersma/socat-proxy/actions/runs/32425384109
+32425187638	Raymarine analysis monitor	completed	success	ff408dcdc79556927da9a6edd92f2a251405129d	https://github.com/roelbroersma/socat-proxy/actions/runs/32425187638
+32425075694	Raymarine APK analysis	completed	success	ede063913f245a29d753be97c67583c28ab7d5c0	https://github.com/roelbroersma/socat-proxy/actions/runs/32425075694
 32402844218	Raymarine analysis monitor	completed	success	23ec719fe7758ce43d72f70b6c7154e8dd2baaef	https://github.com/roelbroersma/socat-proxy/actions/runs/32402844218
 32402815241	Axiom YachtSense library export	completed	success	a0713eb3edf39adb503994094c63f8ae551900c5	https://github.com/roelbroersma/socat-proxy/actions/runs/32402815241
 32402446219	Raymarine analysis monitor	completed	success	15cefcbe2675077d5ba982ce65d9cd6226d18d26	https://github.com/roelbroersma/socat-proxy/actions/runs/32402446219
