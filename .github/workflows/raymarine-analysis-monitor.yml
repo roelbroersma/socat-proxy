@@ -1,0 +1,50 @@
+name: Raymarine analysis monitor
+
+on:
+  push:
+    branches:
+      - raymarine-firmware-analysis
+    paths:
+      - .github/workflows/raymarine-analysis-monitor.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish current workflow runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          mkdir -p analysis-output
+          sleep 5
+          curl -L --fail \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs?branch=raymarine-firmware-analysis&per_page=20" \
+            -o analysis-output/actions-runs.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('analysis-output/actions-runs.json').read_text())
+          lines = []
+          for run in data.get('workflow_runs', []):
+              lines.append(
+                  f"{run.get('id')}\t{run.get('name')}\t{run.get('status')}\t"
+                  f"{run.get('conclusion')}\t{run.get('head_sha')}\t{run.get('html_url')}"
+              )
+          Path('analysis-output/actions-runs.txt').write_text('\n'.join(lines) + '\n')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add analysis-output/actions-runs.json analysis-output/actions-runs.txt
+          git commit -m "Publish Raymarine analysis workflow status" || exit 0
+          git push origin HEAD:raymarine-firmware-analysis
