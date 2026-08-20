@@ -1,0 +1,33 @@
+name: Axiom YachtSense library export
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - raymarine-firmware-analysis
+    paths:
+      - .github/workflows/axiom-yachtsense-library-export.yml
+      - tools/export-axiom-yachtsense-libs.sh
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: raymarine-firmware-analysis
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            p7zip-full squashfs-tools file binutils llvm curl git cargo python3 make gcc
+      - name: Export libraries and disassembly
+        run: bash tools/export-axiom-yachtsense-libs.sh
+      - name: Upload export
+        uses: actions/upload-artifact@v4
+        with:
+          name: axiom-yachtsense-libraries
+          path: axiom-export/
+          retention-days: 3
+          compression-level: 9
