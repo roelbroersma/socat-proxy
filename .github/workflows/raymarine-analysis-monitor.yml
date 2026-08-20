@@ -1,6 +1,6 @@
 name: Raymarine analysis monitor
 
-# Refresh marker: axiom-yachtsense-focused
+# Refresh marker: axiom-library-export
 on:
   push:
     branches:
