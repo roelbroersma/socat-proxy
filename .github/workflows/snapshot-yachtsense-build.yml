@@ -1,6 +1,6 @@
 name: Snapshot YachtSense RutOS build
 
-# Refresh marker: source-archive-fix
+# Refresh marker: ruby-doc-patch
 on:
   push:
     branches:
