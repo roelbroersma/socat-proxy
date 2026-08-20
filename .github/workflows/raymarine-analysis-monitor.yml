@@ -1,6 +1,6 @@
 name: Raymarine analysis monitor
 
-# Refresh marker: axiom-library-export
+# Refresh marker: raymarine-apk-analysis
 on:
   push:
     branches:
