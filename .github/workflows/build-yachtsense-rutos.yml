@@ -15,7 +15,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 180
+    timeout-minutes: 240
 
     steps:
       - name: Check out package source
@@ -36,8 +36,9 @@ jobs:
 
           path = Path('rutos-yachtsense/build.sh')
           text = path.read_text()
-          needle = 'test -d "$SDK/package/feeds/vuci"\n'
-          patch = r'''
+
+          sdk_needle = 'test -d "$SDK/package/feeds/vuci"\n'
+          sdk_patch = r'''
           log "Patching SDK container for CI and current RubyGems"
           PATCHED_DOCKERFILES=0
           while IFS= read -r dockerfile; do
@@ -49,14 +50,26 @@ jobs:
 
           # Teltonika's helper always requests an interactive TTY. GitHub Actions
           # has no TTY, so retain stdin but remove the -t flag.
-          sed -i 's/run -it/run -i/' "$SDK/scripts/dockerbuild"
+          sed -i -E 's/(docker[^\n]* run[^\n]*) -it([[:space:]\\])?/\\1 -i\\2/g; s/run -it/run -i/g; s/-it --rm/-i --rm/g; s/--rm -it/--rm -i/g' "$SDK/scripts/dockerbuild"
           grep -n 'DOCKER_CMD run' "$SDK/scripts/dockerbuild" | tee -a "$DIST/sdk-docker-patches.txt"
           '''.strip('\n')
           if 'Patching SDK container for CI and current RubyGems' not in text:
-              if needle not in text:
+              if sdk_needle not in text:
                   raise SystemExit('SDK insertion point not found')
-              text = text.replace(needle, needle + '\n' + patch + '\n', 1)
-              path.write_text(text)
+              text = text.replace(sdk_needle, sdk_needle + '\n' + sdk_patch + '\n', 1)
+
+          build_needle = 'log "Building native emulator"\n'
+          toolchain_patch = r'''
+          log "Preparing host tools and ARM/musl target toolchain"
+          ./scripts/dockerbuild make tools/install V=s -j2
+          ./scripts/dockerbuild make toolchain/install V=s -j2
+          '''.strip('\n')
+          if 'Preparing host tools and ARM/musl target toolchain' not in text:
+              if build_needle not in text:
+                  raise SystemExit('Native build insertion point not found')
+              text = text.replace(build_needle, toolchain_patch + '\n\n' + build_needle, 1)
+
+          path.write_text(text)
           PY
           bash -n rutos-yachtsense/build.sh
 
