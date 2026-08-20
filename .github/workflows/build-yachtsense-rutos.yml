@@ -29,6 +29,32 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             ca-certificates curl jq tar gzip zip file binutils
 
+      - name: Patch current RubyGems compatibility into SDK build
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('rutos-yachtsense/build.sh')
+          text = path.read_text()
+          needle = 'test -d "$SDK/package/feeds/vuci"\n'
+          patch = r'''
+          log "Patching SDK container for current RubyGems"
+          PATCHED_DOCKERFILES=0
+          while IFS= read -r dockerfile; do
+            sed -i 's/gem install ceedling/gem install ceedling --no-document/g' "$dockerfile"
+            grep -n 'gem install ceedling' "$dockerfile" | tee -a "$DIST/sdk-docker-patches.txt"
+            PATCHED_DOCKERFILES=$((PATCHED_DOCKERFILES + 1))
+          done < <(grep -RIl --include='Dockerfile*' 'gem install ceedling' "$SDK")
+          test "$PATCHED_DOCKERFILES" -gt 0
+          '''.strip('\n')
+          if 'Patching SDK container for current RubyGems' not in text:
+              if needle not in text:
+                  raise SystemExit('SDK insertion point not found')
+              text = text.replace(needle, needle + '\n' + patch + '\n', 1)
+              path.write_text(text)
+          PY
+          bash -n rutos-yachtsense/build.sh
+
       - name: Build against official RUTX RutOS 7.24.1 SDK
         run: bash rutos-yachtsense/build.sh
 
