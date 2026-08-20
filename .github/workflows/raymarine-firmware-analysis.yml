@@ -1,0 +1,191 @@
+name: Raymarine firmware analysis
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - raymarine-firmware-analysis
+    paths:
+      - .github/workflows/raymarine-firmware-analysis.yml
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            p7zip-full unzip squashfs-tools e2fsprogs file binutils jq ripgrep \
+            curl git cargo python3 python3-pip binwalk libssl-dev make gcc
+
+      - name: Download official firmware
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p "$RUNNER_TEMP/raymarine" "$GITHUB_WORKSPACE/report"
+          cd "$RUNNER_TEMP/raymarine"
+          curl -L --fail --retry 8 --retry-delay 5 --retry-all-errors \
+            -o yachtsense-v5.30.zip \
+            https://teledyne.app.box.com/public/static/hfmbusrqondj2u7zgxevdejrtzxtgcqn.zip
+          curl -L --fail --retry 8 --retry-delay 5 --retry-all-errors \
+            -o axiom-lh4.11.133.zip \
+            https://teledyne.app.box.com/public/static/18w6yebq78srqv88gl4exetufg1b0o77.zip
+          sha256sum *.zip | tee "$GITHUB_WORKSPACE/report/sha256.txt"
+          ls -lh *.zip | tee "$GITHUB_WORKSPACE/report/downloads.txt"
+          file *.zip | tee "$GITHUB_WORKSPACE/report/download-types.txt"
+
+      - name: Extract YachtSense update
+        shell: bash
+        run: |
+          set -u
+          ROOT="$RUNNER_TEMP/raymarine"
+          OUT="$GITHUB_WORKSPACE/report"
+          mkdir -p "$ROOT/ysl" "$ROOT/ysl-expanded"
+          7z x -y "$ROOT/yachtsense-v5.30.zip" -o"$ROOT/ysl" | tee "$OUT/ysl-unzip.log"
+          find "$ROOT/ysl" -printf '%y %s %p\n' | sort | tee "$OUT/ysl-filelist.txt"
+          find "$ROOT/ysl" -type f -print0 | xargs -0 -r file | tee "$OUT/ysl-filetypes.txt"
+
+          # Expand nested ordinary archives.
+          for round in 1 2 3; do
+            while IFS= read -r -d '' f; do
+              marker="$f.expanded-ok"
+              [ -e "$marker" ] && continue
+              touch "$marker"
+              d="$f.expanded"
+              mkdir -p "$d"
+              7z x -y "$f" -o"$d" >/dev/null 2>&1 || rmdir "$d" 2>/dev/null || true
+            done < <(find "$ROOT/ysl" -type f \( -iname '*.zip' -o -iname '*.tar' -o -iname '*.tgz' -o -iname '*.tar.gz' -o -iname '*.tar.bz2' -o -iname '*.tar.xz' -o -iname '*.gz' -o -iname '*.bz2' -o -iname '*.xz' \) -print0)
+          done
+
+          find "$ROOT/ysl" -type f -size +256k -print0 | while IFS= read -r -d '' f; do
+            echo "===== $f =====" >> "$OUT/ysl-binwalk.txt"
+            binwalk "$f" >> "$OUT/ysl-binwalk.txt" 2>&1 || true
+          done
+
+          # Try recursive binwalk extraction on firmware-sized payloads.
+          find "$ROOT/ysl" -type f -size +1M -print0 | while IFS= read -r -d '' f; do
+            safe="$(basename "$f" | tr -c 'A-Za-z0-9._-' '_')"
+            mkdir -p "$ROOT/ysl-expanded/$safe"
+            (cd "$ROOT/ysl-expanded/$safe" && binwalk -eM --run-as=root "$f") >/dev/null 2>&1 || true
+          done
+
+          find "$ROOT/ysl-expanded" -printf '%y %s %p\n' | sort | tee "$OUT/ysl-expanded-filelist.txt"
+
+      - name: Extract Axiom update and Android system
+        shell: bash
+        run: |
+          set -u
+          ROOT="$RUNNER_TEMP/raymarine"
+          OUT="$GITHUB_WORKSPACE/report"
+          mkdir -p "$ROOT/axiom-zip" "$ROOT/axiom-iso" "$ROOT/axiom-rk1" "$ROOT/axiom-rk2" "$ROOT/axiom-system"
+          7z x -y "$ROOT/axiom-lh4.11.133.zip" -o"$ROOT/axiom-zip" | tee "$OUT/axiom-unzip.log"
+          find "$ROOT/axiom-zip" -printf '%y %s %p\n' | sort | tee "$OUT/axiom-zip-filelist.txt"
+
+          ISO="$(find "$ROOT/axiom-zip" -type f -iname '*.iso' | head -n1)"
+          echo "ISO=$ISO" | tee "$OUT/axiom-selected.txt"
+          if [ -n "$ISO" ]; then
+            7z x -y "$ISO" -o"$ROOT/axiom-iso" | tee "$OUT/axiom-iso-extract.log"
+          fi
+          find "$ROOT/axiom-iso" -printf '%y %s %p\n' | sort | tee "$OUT/axiom-iso-filelist.txt"
+
+          IMG="$(find "$ROOT/axiom-iso" "$ROOT/axiom-zip" -type f -iname 'raymarine_axiom_upgrade-*.img' | head -n1)"
+          echo "IMG=$IMG" | tee -a "$OUT/axiom-selected.txt"
+          file "$IMG" | tee "$OUT/axiom-img-filetype.txt" || true
+
+          git clone --depth 1 https://github.com/suyulin/afptool-rs.git "$ROOT/afptool-rs"
+          (cd "$ROOT/afptool-rs" && cargo build --release) | tee "$OUT/afptool-build.log"
+          AFP="$ROOT/afptool-rs/target/release/afptool-rs"
+          "$AFP" unpack "$IMG" "$ROOT/axiom-rk1" | tee "$OUT/axiom-rk-unpack1.log" || true
+          INNER="$(find "$ROOT/axiom-rk1" -type f \( -iname 'embedded-update.img' -o -iname '*update*.img' \) | head -n1)"
+          echo "INNER=$INNER" | tee -a "$OUT/axiom-selected.txt"
+          if [ -n "$INNER" ]; then
+            "$AFP" unpack "$INNER" "$ROOT/axiom-rk2" | tee "$OUT/axiom-rk-unpack2.log" || true
+          fi
+          find "$ROOT/axiom-rk1" "$ROOT/axiom-rk2" -printf '%y %s %p\n' | sort | tee "$OUT/axiom-rk-filelist.txt"
+
+          SYSTEM="$(find "$ROOT/axiom-rk1" "$ROOT/axiom-rk2" -type f -iname 'system.img' | head -n1)"
+          echo "SYSTEM=$SYSTEM" | tee -a "$OUT/axiom-selected.txt"
+          file "$SYSTEM" | tee "$OUT/axiom-system-filetype.txt" || true
+          if [ -n "$SYSTEM" ]; then
+            if file -b "$SYSTEM" | grep -qi squashfs; then
+              unsquashfs -f -d "$ROOT/axiom-system" "$SYSTEM" | tee "$OUT/axiom-unsquashfs.log"
+            elif file -b "$SYSTEM" | grep -Eqi 'ext[234] filesystem'; then
+              debugfs -R "rdump / $ROOT/axiom-system" "$SYSTEM" | tee "$OUT/axiom-debugfs.log"
+            else
+              7z x -y "$SYSTEM" -o"$ROOT/axiom-system" | tee "$OUT/axiom-system-7z.log" || true
+            fi
+          fi
+          find "$ROOT/axiom-system" -printf '%y %s %p\n' | sort | tee "$OUT/axiom-system-filelist.txt"
+
+      - name: Search both firmwares for YachtSense recognition logic
+        shell: bash
+        run: |
+          set -u
+          ROOT="$RUNNER_TEMP/raymarine"
+          OUT="$GITHUB_WORKSPACE/report"
+          PATTERN='Yacht.?Sense|YSL|E70640|GetHubInfo|GetHomeStatus|LanConfigure|198\.18\.|Internet.?Source|preferred.?internet|default.?gateway|gateway|DHCP.?option|option.?43|option.?60|vendor.?class|vendorclass|LLDP|lldpd|mDNS|avahi|SSDP|UPnP|RayNet|discovery|discover|cloudconnector|protobuf|proto2|proto3|7778|9999'
+
+          : > "$OUT/content-hits.txt"
+          for d in "$ROOT/ysl" "$ROOT/ysl-expanded" "$ROOT/axiom-system"; do
+            [ -d "$d" ] || continue
+            echo "===== ROOT $d =====" >> "$OUT/content-hits.txt"
+            rg -a -i -n --no-messages --max-columns 800 --max-columns-preview "$PATTERN" "$d" >> "$OUT/content-hits.txt" || true
+          done
+
+          : > "$OUT/relevant-filenames.txt"
+          for d in "$ROOT/ysl" "$ROOT/ysl-expanded" "$ROOT/axiom-system"; do
+            [ -d "$d" ] || continue
+            find "$d" -type f | grep -Eai '(yacht|sense|ysl|raynet|router|network|gateway|dhcp|lldp|discover|avahi|mdns|ssdp|upnp|connect|ethernet)' >> "$OUT/relevant-filenames.txt" || true
+          done
+          sort -u "$OUT/relevant-filenames.txt" -o "$OUT/relevant-filenames.txt"
+
+          : > "$OUT/relevant-strings.txt"
+          while IFS= read -r f; do
+            [ -f "$f" ] || continue
+            [ "$(stat -c %s "$f")" -le 104857600 ] || continue
+            echo "===== $f =====" >> "$OUT/relevant-strings.txt"
+            strings -a -n 4 "$f" 2>/dev/null | grep -Eai -C 8 "$PATTERN" >> "$OUT/relevant-strings.txt" || true
+            strings -el -n 4 "$f" 2>/dev/null | grep -Eai -C 8 "$PATTERN" >> "$OUT/relevant-strings.txt" || true
+          done < "$OUT/relevant-filenames.txt"
+
+          # Files containing the strongest direct identity strings.
+          : > "$OUT/direct-identity-files.txt"
+          find "$ROOT/axiom-system" "$ROOT/ysl" "$ROOT/ysl-expanded" -type f -size -100M -print0 2>/dev/null | while IFS= read -r -d '' f; do
+            if strings -a -n 5 "$f" 2>/dev/null | grep -Eqi 'YachtSense|Yacht Sense|E70640|GetHubInfo'; then
+              echo "$f" | tee -a "$OUT/direct-identity-files.txt"
+              echo "===== $f =====" >> "$OUT/direct-identity-context.txt"
+              strings -a -n 4 "$f" 2>/dev/null | grep -Eai -C 25 'YachtSense|Yacht Sense|E70640|GetHubInfo|Internet.?Source|gateway|DHCP|LLDP|discover|RayNet|198\.18\.' >> "$OUT/direct-identity-context.txt" || true
+              file "$f" >> "$OUT/direct-identity-context.txt" || true
+              readelf -h -d -s "$f" >> "$OUT/direct-identity-context.txt" 2>/dev/null || true
+            fi
+          done
+
+          {
+            echo '===== SUMMARY ====='
+            date -u
+            echo "Direct identity files: $(wc -l < "$OUT/direct-identity-files.txt" 2>/dev/null || echo 0)"
+            echo "YachtSense/E70640/GetHubInfo hits: $(grep -Eic 'YachtSense|E70640|GetHubInfo' "$OUT/content-hits.txt" 2>/dev/null || true)"
+            echo "LLDP hits: $(grep -Eic 'LLDP|lldpd' "$OUT/content-hits.txt" 2>/dev/null || true)"
+            echo "DHCP vendor-option hits: $(grep -Eic 'option.?43|option.?60|vendor.?class|DHCP.?option' "$OUT/content-hits.txt" 2>/dev/null || true)"
+            echo "RayNet/discovery hits: $(grep -Eic 'RayNet|discover' "$OUT/content-hits.txt" 2>/dev/null || true)"
+            echo
+            cat "$OUT/direct-identity-files.txt" 2>/dev/null || true
+            echo
+            echo '===== DIRECT IDENTITY CONTEXT ====='
+            cat "$OUT/direct-identity-context.txt" 2>/dev/null || true
+          } | tee "$OUT/summary-and-direct-context.txt"
+
+      - name: Upload textual report
+        uses: actions/upload-artifact@v4
+        with:
+          name: raymarine-firmware-analysis-report
+          path: report/
+          retention-days: 2
+          compression-level: 9
