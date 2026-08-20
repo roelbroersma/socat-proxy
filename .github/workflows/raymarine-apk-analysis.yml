@@ -72,25 +72,68 @@ jobs:
           done < apk-work/report/apks.txt
           find apk-work/unpacked -type f -name '*.so' -printf '%p\n' | sort > apk-work/report/native-libs.txt
 
-      - name: Find network discovery and mirroring code
+      - name: Extract focused MFD discovery and control report
         if: steps.analyze.outcome == 'success'
         shell: bash
         run: |
           set -euxo pipefail
-          PAT='YachtSense|Yachtsense|yachtsense|MFD|mfd|NsdManager|DnsSd|DNS-SD|mDNS|mdns|Bonjour|zeroconf|_http\._tcp|_ray|RayNet|MulticastSocket|DatagramSocket|multicast|224\.0\.0\.251|5353|7777|VNC|vnc|RFB|rfb|RTSP|rtsp|mirror|Mirror|screen.?stream|5900|5901|discover|Discovery|NetworkInterface|WifiManager'
-          grep -RniE --binary-files=without-match "$PAT" apk-work/jadx 2>/dev/null | head -n 20000 > apk-work/report/interesting.txt || true
-          : > apk-work/report/native-strings.txt
-          while IFS= read -r so; do
-            echo "===== $so =====" >> apk-work/report/native-strings.txt
-            strings -a "$so" | grep -iE 'yachtsense|raymarine|mfd|mdns|dns.?sd|bonjour|zeroconf|_http\._tcp|multicast|224\.0\.0\.251|5353|7777|vnc|rfb|rtsp|mirror|stream|5900|5901|discov' | sort -u | head -n 3000 >> apk-work/report/native-strings.txt || true
-          done < apk-work/report/native-libs.txt
-          grep -RilE --binary-files=without-match 'YachtSense|NsdManager|DnsSd|mDNS|_http\._tcp|VNC|RFB|RTSP|mirror|screen.?stream|MulticastSocket|DatagramSocket' apk-work/jadx 2>/dev/null | head -n 400 > apk-work/report/selected-files.txt || true
-          : > apk-work/report/source-excerpts.txt
-          while IFS= read -r f; do
-            [ -f "$f" ] || continue
-            echo "===== ${f#apk-work/jadx/} =====" >> apk-work/report/source-excerpts.txt
-            grep -nEi -C 14 'YachtSense|NsdManager|DnsSd|mDNS|_http\._tcp|VNC|RFB|RTSP|mirror|screen.?stream|MulticastSocket|DatagramSocket' "$f" >> apk-work/report/source-excerpts.txt || true
-          done < apk-work/report/selected-files.txt
+          mkdir -p apk-work/report/focused
+          ROOT=apk-work/jadx/sources
+          [ -d "$ROOT" ] || ROOT=apk-work/jadx
+
+          # Small source excerpts around the app's own local-network/MFD classes.
+          for name in \
+            OnboardHardwareSearchManager \
+            OnboardHardwareManager \
+            MFDDeviceService \
+            ConnectedNetworkDevice \
+            NetworkDeviceType \
+            YachtSenseLinkNetworkInfo \
+            MFDDisplayInfo \
+            MFDDisplaySettings \
+            RayViewViewModelImpl \
+            RayControlActivity \
+            ScanRayDevicesView \
+            LocalNetworkRemoteServiceWithFailover; do
+            out="apk-work/report/focused/${name}.txt"
+            : > "$out"
+            while IFS= read -r f; do
+              [ -f "$f" ] || continue
+              echo "===== ${f#$ROOT/} =====" >> "$out"
+              # These files are decompiler output; retain only network/control-related lines with context.
+              grep -nEi -C 12 'native|external|service|discover|search|network|host|address|port|socket|mfd|display|yacht|link|rayview|control|connect|remote|wifi|mdns|dns|multicast|stream|video|start|stop' "$f" \
+                | head -n 1600 >> "$out" || true
+            done < <(find "$ROOT" -type f -name "${name}.java" | sort)
+          done
+
+          # Focused grep only inside Raymarine-owned packages, avoiding framework noise.
+          RAY="$ROOT/com/raymarine/rayconnect"
+          [ -d "$RAY" ] || RAY="$ROOT"
+          grep -RniE --binary-files=without-match \
+            'NsdManager|MulticastSocket|DatagramSocket|WifiManager|NetworkInterface|YachtSense|MFDDeviceService|OnboardHardwareSearch|RayView|RayControl|RemoteClient|rrccpp|mdns|DNS-SD|_http\._tcp|224\.0\.0\.251|5353|7777|5900|5901|RTSP|RFB|VNC|serviceType|serviceName|host|port|address' \
+            "$RAY" 2>/dev/null | head -n 6000 > apk-work/report/focused/raymarine-network-grep.txt || true
+
+          # Extract strings separately from the libraries that look responsible for
+          # mDNS discovery and remote display/control. Keeping each file small makes
+          # the result readable through the GitHub API.
+          for libname in libmdns.so librrccpp.so libRemoteClient.so libmissioncontrol.so libRayDB_SDK_Interface.so libnavigator_api.so; do
+            out="apk-work/report/focused/${libname}.txt"
+            : > "$out"
+            while IFS= read -r so; do
+              [ -f "$so" ] || continue
+              echo "===== $so =====" >> "$out"
+              strings -a -t x "$so" | grep -iE \
+                'yachtsense|raymarine|axiom|mfd|mdns|dns.?sd|bonjour|zeroconf|service|_http\._tcp|_tcp|_udp|multicast|224\.0\.0\.251|5353|7777|5900|5901|vnc|rfb|rtsp|mirror|stream|remote|control|display|discover|socket|connect|address|port|http|video' \
+                | sort -u | head -n 5000 >> "$out" || true
+            done < <(find apk-work/unpacked -type f -name "$libname" | sort)
+          done
+
+          # Package/version and manifest networking permissions/features.
+          : > apk-work/report/focused/manifest-and-version.txt
+          find apk-work/unpacked -type f -name AndroidManifest.xml -print >> apk-work/report/focused/manifest-and-version.txt || true
+          grep -RniE --binary-files=without-match \
+            'versionName|versionCode|INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE|CHANGE_WIFI_MULTICAST_STATE|NEARBY_WIFI|CHANGE_NETWORK_STATE' \
+            apk-work/unpacked 2>/dev/null | head -n 1000 >> apk-work/report/focused/manifest-and-version.txt || true
 
       - name: Publish compact APK report
         if: always()
@@ -109,7 +152,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A apk-analysis-output
-          git commit -m 'Publish Raymarine APK analysis' || exit 0
+          git commit -m 'Publish focused Raymarine APK analysis' || exit 0
           for attempt in 1 2 3; do
             git pull --rebase origin raymarine-firmware-analysis && \
               git push origin HEAD:raymarine-firmware-analysis && exit 0
