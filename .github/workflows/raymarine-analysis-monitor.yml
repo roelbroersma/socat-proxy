@@ -1,5 +1,6 @@
 name: Raymarine analysis monitor
 
+# Refresh marker: deep-analysis-v2
 on:
   push:
     branches:
@@ -47,4 +48,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add analysis-output/actions-runs.json analysis-output/actions-runs.txt
           git commit -m "Publish Raymarine analysis workflow status" || exit 0
+          git pull --rebase origin raymarine-firmware-analysis
           git push origin HEAD:raymarine-firmware-analysis
