@@ -1,0 +1,42 @@
+name: Build YachtSense RutOS package
+
+on:
+  push:
+    branches:
+      - yachtsense-rutos-vuci
+    paths:
+      - 'rutos-yachtsense/**'
+      - '.github/workflows/build-yachtsense-rutos.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+
+    steps:
+      - name: Check out package source
+        uses: actions/checkout@v4
+        with:
+          ref: yachtsense-rutos-vuci
+
+      - name: Install host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ca-certificates curl jq tar gzip zip file binutils
+
+      - name: Build against official RUTX RutOS 7.24.1 SDK
+        run: bash rutos-yachtsense/build.sh
+
+      - name: Upload installable packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: YachtSense-Link-Emulator-RUTX14-RutOS-7.24.1
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 9
