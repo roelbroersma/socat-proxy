@@ -1,0 +1,5 @@
+run_id=32414598458
+job_id=96572752089
+status=completed
+conclusion=failure
+url=https://github.com/roelbroersma/socat-proxy/actions/runs/32414598458/job/96572752089

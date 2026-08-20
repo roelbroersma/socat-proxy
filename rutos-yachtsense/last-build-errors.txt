@@ -1,15 +1,60 @@
-224:2026-08-20T20:18:35.6968311Z [36;1m        raise SystemExit('SDK insertion point not found')[0m
-807:2026-08-20T20:19:12.7056474Z #7 6.095   libelf1 libemail-address-xs-perl libencode-locale-perl liberror-perl
-869:2026-08-20T20:19:12.7097848Z #7 6.095   libsyntax-keyword-try-perl libsys-hostname-long-perl libtasn1-6-dev
-1326:2026-08-20T20:19:20.4904807Z #7 13.97 Get:410 http://archive.ubuntu.com/ubuntu jammy/main amd64 liberror-perl all 0.17029-1 [26.5 kB]
-1554:2026-08-20T20:19:25.7549149Z #7 19.24 Get:638 http://archive.ubuntu.com/ubuntu jammy/main amd64 libsyntax-keyword-try-perl amd64 0.26-1build1 [27.1 kB]
-2545:2026-08-20T20:19:36.7378703Z #7 30.08 ln: failed to create symbolic link '/etc/resolv.conf': Device or resource busy
-3879:2026-08-20T20:20:01.9258101Z #7 55.32 Selecting previously unselected package liberror-perl.
-3880:2026-08-20T20:20:01.9258798Z #7 55.32 Preparing to unpack .../299-liberror-perl_0.17029-1_all.deb ...
-3881:2026-08-20T20:20:01.9259823Z #7 55.32 Unpacking liberror-perl (0.17029-1) ...
-4565:2026-08-20T20:20:21.9470235Z #7 75.43 Selecting previously unselected package libsyntax-keyword-try-perl.
-4566:2026-08-20T20:20:21.9470892Z #7 75.43 Preparing to unpack .../527-libsyntax-keyword-try-perl_0.26-1build1_amd64.deb ...
-4567:2026-08-20T20:20:21.9471488Z #7 75.43 Unpacking libsyntax-keyword-try-perl (0.26-1build1) ...
-5218:2026-08-20T20:20:34.6695589Z #7 88.08 Setting up libsyntax-keyword-try-perl (0.26-1build1) ...
-5369:2026-08-20T20:20:40.6603352Z #7 94.06 Setting up liberror-perl (0.17029-1) ...
-5909:2026-08-20T20:21:07.0259701Z ##[error]Process completed with exit code 1.
+221-2026-08-20T20:32:24.5254186Z [36;1m[0m
+222-2026-08-20T20:32:24.5254497Z [36;1m# Teltonika's helper always requests an interactive TTY. GitHub Actions[0m
+223-2026-08-20T20:32:24.5254943Z [36;1m# has no TTY, so retain stdin but remove the -t flag.[0m
+224-2026-08-20T20:32:24.5255345Z [36;1msed -i 's/run -it/run -i/' "$SDK/scripts/dockerbuild"[0m
+225-2026-08-20T20:32:24.5255858Z [36;1mgrep -n 'DOCKER_CMD run' "$SDK/scripts/dockerbuild" | tee -a "$DIST/sdk-docker-patches.txt"[0m
+226-2026-08-20T20:32:24.5256319Z [36;1m'''.strip('\n')[0m
+227-2026-08-20T20:32:24.5256655Z [36;1mif 'Patching SDK container for CI and current RubyGems' not in text:[0m
+228-2026-08-20T20:32:24.5257037Z [36;1m    if needle not in text:[0m
+229:2026-08-20T20:32:24.5257356Z [36;1m        raise SystemExit('SDK insertion point not found')[0m
+230-2026-08-20T20:32:24.5257767Z [36;1m    text = text.replace(needle, needle + '\n' + patch + '\n', 1)[0m
+231-2026-08-20T20:32:24.5258470Z [36;1m    path.write_text(text)[0m
+232-2026-08-20T20:32:24.5258709Z [36;1mPY[0m
+233-2026-08-20T20:32:24.5258929Z [36;1mbash -n rutos-yachtsense/build.sh[0m
+234-2026-08-20T20:32:24.5333383Z shell: /usr/bin/bash -e {0}
+235-2026-08-20T20:32:24.5333652Z ##[endgroup]
+236-2026-08-20T20:32:24.5716871Z ##[group]Run bash rutos-yachtsense/build.sh
+237-2026-08-20T20:32:24.5717239Z [36;1mbash rutos-yachtsense/build.sh[0m
+--
+2543-2026-08-20T20:33:12.7275915Z #7 25.46 Setting up libip4tc2:amd64 (1.8.7-1ubuntu5.2) ...
+2544-2026-08-20T20:33:12.7276667Z #7 25.47 Setting up libkmod2:amd64 (29-1ubuntu1.1) ...
+2545-2026-08-20T20:33:12.7277275Z #7 25.47 Setting up mount (2.37.2-4ubuntu3.5) ...
+2546-2026-08-20T20:33:12.7277676Z #7 25.47 Setting up systemd (249.11-0ubuntu3.22) ...
+2547-2026-08-20T20:33:12.7278978Z #7 25.48 Created symlink /etc/systemd/system/getty.target.wants/getty@tty1.service → /lib/systemd/system/getty@.service.
+2548-2026-08-20T20:33:12.7280095Z #7 25.49 Created symlink /etc/systemd/system/multi-user.target.wants/remote-fs.target → /lib/systemd/system/remote-fs.target.
+2549-2026-08-20T20:33:12.7281268Z #7 25.49 Created symlink /etc/systemd/system/dbus-org.freedesktop.resolve1.service → /lib/systemd/system/systemd-resolved.service.
+2550-2026-08-20T20:33:12.7283013Z #7 25.49 Created symlink /etc/systemd/system/multi-user.target.wants/systemd-resolved.service → /lib/systemd/system/systemd-resolved.service.
+2551:2026-08-20T20:33:12.7284375Z #7 25.50 ln: failed to create symbolic link '/etc/resolv.conf': Device or resource busy
+2552-2026-08-20T20:33:12.7285959Z #7 25.50 Created symlink /etc/systemd/system/sysinit.target.wants/systemd-pstore.service → /lib/systemd/system/systemd-pstore.service.
+2553-2026-08-20T20:33:12.7287148Z #7 25.51 Initializing machine ID from random generator.
+2554-2026-08-20T20:33:12.8032093Z #7 25.73 Selecting previously unselected package systemd-sysv.
+2555-2026-08-20T20:33:12.9035404Z #7 25.73 (Reading database ... 
+2556-2026-08-20T20:33:12.9036201Z (Reading database ... 5%
+2557-2026-08-20T20:33:12.9036811Z (Reading database ... 10%
+2558-2026-08-20T20:33:12.9037512Z (Reading database ... 15%
+2559-2026-08-20T20:33:12.9038215Z (Reading database ... 20%
+--
+6451-2026-08-20T20:35:03.0585358Z • toolchain is rebuilt
+6452-2026-08-20T20:35:03.0588848Z [ -w "/home/runner/work/_temp/yachtsense-rutos-build/sdk/tmp/.pkg-rebuilt" ] && echo "toolchain" >> "/home/runner/work/_temp/yachtsense-rutos-build/sdk/tmp/.pkg-rebuilt"|| true
+6453-2026-08-20T20:35:03.0606364Z touch /home/runner/work/_temp/yachtsense-rutos-build/sdk/build_dir/target-arm_cortex-a7+neon-vfpv4_musl_eabi/toolchain/.built
+6454-2026-08-20T20:35:03.0632471Z rm -rf /home/runner/work/_temp/yachtsense-rutos-build/sdk/build_dir/target-arm_cortex-a7+neon-vfpv4_musl_eabi/toolchain/.pkgdir/libc.installed /home/runner/work/_temp/yachtsense-rutos-build/sdk/build_dir/target-arm_cortex-a7+neon-vfpv4_musl_eabi/toolchain/.pkgdir/libc
+6455-2026-08-20T20:35:03.0659047Z mkdir -p /home/runner/work/_temp/yachtsense-rutos-build/sdk/build_dir/target-arm_cortex-a7+neon-vfpv4_musl_eabi/toolchain/.pkgdir/libc
+6456-2026-08-20T20:35:03.0689346Z install -d -m0755 /home/runner/work/_temp/yachtsense-rutos-build/sdk/build_dir/target-arm_cortex-a7+neon-vfpv4_musl_eabi/toolchain/.pkgdir/libc/lib /home/runner/work/_temp/yachtsense-rutos-build/sdk/build_dir/target-arm_cortex-a7+neon-vfpv4_musl_eabi/toolchain/.pkgdir/libc/usr/bin
+6457-2026-08-20T20:35:03.0720184Z cp -fpR /home/runner/work/_temp/yachtsense-rutos-build/sdk/staging_dir/toolchain-arm_cortex-a7+neon-vfpv4_gcc-8.4.0_musl_eabi/lib/ld-musl-*.so* /home/runner/work/_temp/yachtsense-rutos-build/sdk/build_dir/target-arm_cortex-a7+neon-vfpv4_musl_eabi/toolchain/.pkgdir/libc/lib/
+6458-2026-08-20T20:35:03.0747500Z cp: cannot stat '/home/runner/work/_temp/yachtsense-rutos-build/sdk/staging_dir/toolchain-arm_cortex-a7+neon-vfpv4_gcc-8.4.0_musl_eabi/lib/ld-musl-*.so*': No such file or directory
+6459:2026-08-20T20:35:03.0750565Z make[2]: *** [Makefile:733: /home/runner/work/_temp/yachtsense-rutos-build/sdk/build_dir/target-arm_cortex-a7+neon-vfpv4_musl_eabi/toolchain/.pkgdir/libc.installed] Error 1
+6460-2026-08-20T20:35:03.0751738Z make[2]: Leaving directory '/home/runner/work/_temp/yachtsense-rutos-build/sdk/package/libs/toolchain'
+6461-2026-08-20T20:35:03.0753880Z time: package/libs/toolchain/compile#0.38#0.19#0.54
+6462:2026-08-20T20:35:03.0764176Z     ERROR: package/libs/toolchain failed to build.
+6463:2026-08-20T20:35:03.0769651Z make[1]: *** [package/Makefile:128: package/libs/toolchain/compile] Error 1
+6464-2026-08-20T20:35:03.0775940Z make[1]: Leaving directory '/home/runner/work/_temp/yachtsense-rutos-build/sdk'
+6465-2026-08-20T20:35:03.0808286Z make: *** [/home/runner/work/_temp/yachtsense-rutos-build/sdk/include/toplevel.mk:249: package/yachtsense-emulator/compile] Error 2
+6466:2026-08-20T20:35:03.1363523Z ##[error]Process completed with exit code 2.
+6467-2026-08-20T20:35:03.1530969Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+6468-2026-08-20T20:35:03.1532541Z Post job cleanup.
+6469-2026-08-20T20:35:03.2459517Z [command]/usr/bin/git version
+6470-2026-08-20T20:35:03.2509310Z git version 2.55.0
+6471-2026-08-20T20:35:03.2558284Z Temporarily overriding HOME='/home/runner/work/_temp/f23cba64-6c4a-45ac-94a0-ad304dc212a9' before making global git config changes
+6472-2026-08-20T20:35:03.2559568Z Adding repository directory to the temporary git global config as a safe directory
+6473-2026-08-20T20:35:03.2566017Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/socat-proxy/socat-proxy
+6474-2026-08-20T20:35:03.2623943Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
