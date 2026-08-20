@@ -7,7 +7,7 @@ on:
       - raymarine-firmware-analysis
     paths:
       - .github/workflows/raymarine-firmware-analysis.yml
-      - tools/raymarine-firmware-analysis-v2.sh
+      - tools/axiom-yachtsense-detection.sh
 
 permissions:
   contents: write
@@ -28,13 +28,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             p7zip-full unzip bzip2 tar squashfs-tools e2fsprogs file binutils \
-            jq ripgrep curl git cargo python3 python3-pip binwalk libssl-dev \
-            make gcc android-sdk-libsparse-utils
+            jq ripgrep curl git cargo python3 python3-pip libssl-dev make gcc \
+            android-sdk-libsparse-utils
 
-      - name: Download, deeply extract and analyze firmware
+      - name: Extract Axiom and find YachtSense recognition code
         id: analyze
         continue-on-error: true
-        run: bash tools/raymarine-firmware-analysis-v2.sh
+        run: bash tools/axiom-yachtsense-detection.sh
 
       - name: Publish compact report to analysis branch
         if: always()
@@ -47,9 +47,9 @@ jobs:
             find report -maxdepth 1 -type f -print0 | while IFS= read -r -d '' f; do
               name="$(basename "$f")"
               size="$(stat -c %s "$f")"
-              if [ "$size" -gt 30000000 ]; then
-                head -c 30000000 "$f" > "analysis-output/$name"
-                printf '\n[TRUNCATED AT 30 MB]\n' >> "analysis-output/$name"
+              if [ "$size" -gt 40000000 ]; then
+                head -c 40000000 "$f" > "analysis-output/$name"
+                printf '\n[TRUNCATED AT 40 MB]\n' >> "analysis-output/$name"
               else
                 cp "$f" "analysis-output/$name"
               fi
@@ -64,7 +64,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A analysis-output
-          git commit -m "Publish corrected Raymarine firmware analysis results" || exit 0
+          git commit -m "Publish focused Axiom YachtSense analysis" || exit 0
           for attempt in 1 2 3; do
             git pull --rebase origin raymarine-firmware-analysis && \
               git push origin HEAD:raymarine-firmware-analysis && exit 0
@@ -72,11 +72,11 @@ jobs:
           done
           exit 1
 
-      - name: Upload full analysis artifact
+      - name: Upload Axiom analysis artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: raymarine-deep-firmware-analysis
+          name: axiom-yachtsense-recognition-analysis
           path: report/
           if-no-files-found: warn
           retention-days: 3
