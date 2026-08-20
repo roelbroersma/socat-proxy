@@ -1,0 +1,89 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 96565466623,
+      "run_id": 32412355926,
+      "workflow_name": "Build YachtSense RutOS package",
+      "head_branch": "yachtsense-rutos-vuci",
+      "run_url": "https://api.github.com/repos/roelbroersma/socat-proxy/actions/runs/32412355926",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMGQyPc8AAAAWe8AV_w",
+      "head_sha": "4ba98f96aa1d14813301b292e21ce34b6862432d",
+      "url": "https://api.github.com/repos/roelbroersma/socat-proxy/actions/jobs/96565466623",
+      "html_url": "https://github.com/roelbroersma/socat-proxy/actions/runs/32412355926/job/96565466623",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-08-20T20:07:12Z",
+      "started_at": "2026-08-20T20:07:15Z",
+      "completed_at": "2026-08-20T20:07:34Z",
+      "name": "build",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-08-20T20:07:16Z",
+          "completed_at": "2026-08-20T20:07:17Z"
+        },
+        {
+          "name": "Check out package source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-08-20T20:07:17Z",
+          "completed_at": "2026-08-20T20:07:18Z"
+        },
+        {
+          "name": "Install host tools",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-08-20T20:07:18Z",
+          "completed_at": "2026-08-20T20:07:31Z"
+        },
+        {
+          "name": "Build against official RUTX RutOS 7.24.1 SDK",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 4,
+          "started_at": "2026-08-20T20:07:31Z",
+          "completed_at": "2026-08-20T20:07:31Z"
+        },
+        {
+          "name": "Upload installable packages",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-08-20T20:07:31Z",
+          "completed_at": "2026-08-20T20:07:31Z"
+        },
+        {
+          "name": "Post Check out package source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-08-20T20:07:31Z",
+          "completed_at": "2026-08-20T20:07:31Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-08-20T20:07:31Z",
+          "completed_at": "2026-08-20T20:07:31Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/roelbroersma/socat-proxy/check-runs/96565466623",
+      "labels": [
+        "ubuntu-22.04"
+      ],
+      "runner_id": 1000000308,
+      "runner_name": "GitHub Actions 1000000308",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+run_id=32412355926
+status=completed
+conclusion=failure
+url=https://github.com/roelbroersma/socat-proxy/actions/runs/32412355926
+head_sha=4ba98f96aa1d14813301b292e21ce34b6862432d
+updated_at=2026-08-20T20:08:02Z
