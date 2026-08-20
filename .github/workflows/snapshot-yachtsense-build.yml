@@ -1,0 +1,43 @@
+name: Snapshot YachtSense RutOS build
+
+on:
+  push:
+    branches:
+      - yachtsense-rutos-vuci
+    paths:
+      - '.github/workflows/snapshot-yachtsense-build.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: yachtsense-rutos-vuci
+          fetch-depth: 0
+      - name: Publish current build state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          sleep 10
+          mkdir -p rutos-yachtsense
+          curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/build-yachtsense-rutos.yml/runs?branch=yachtsense-rutos-vuci&per_page=5" \
+            -o /tmp/runs.json
+          jq -r '.workflow_runs[] | [.id,.status,(.conclusion // ""),.head_sha,.html_url] | @tsv' /tmp/runs.json \
+            > rutos-yachtsense/build-snapshot.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rutos-yachtsense/build-snapshot.txt
+          git commit -m "Snapshot YachtSense build state" || exit 0
+          git pull --rebase origin yachtsense-rutos-vuci
+          git push origin HEAD:yachtsense-rutos-vuci
