@@ -1,6 +1,6 @@
 name: Raymarine analysis monitor
 
-# Refresh marker: deep-analysis-v2
+# Refresh marker: axiom-yachtsense-focused
 on:
   push:
     branches:
