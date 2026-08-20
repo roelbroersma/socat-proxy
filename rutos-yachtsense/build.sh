@@ -14,8 +14,8 @@ mkdir -p "$ROOT/source" "$ROOT/sdk" "$DIST/ipks" "$DIST/inspection"
 
 log() { printf '\n===== %s =====\n' "$*"; }
 
-log "Reconstructing package source"
-cat "$WORKSPACE"/rutos-yachtsense/source.part*.b64 | tr -d '\r\n\t ' | base64 -d > "$ROOT/source.tar.gz"
+log "Loading package source"
+cp "$WORKSPACE/rutos-yachtsense/source.tar.gz" "$ROOT/source.tar.gz"
 gzip -t "$ROOT/source.tar.gz"
 tar -xzf "$ROOT/source.tar.gz" -C "$ROOT/source"
 find "$ROOT/source" -type f -print | sort | tee "$DIST/source-files.txt"
